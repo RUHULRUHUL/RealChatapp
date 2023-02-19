@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/chatsFragment"
+        android:icon="@drawable/ic_contact_add"
+        android:title="chat" />
+    <item
+        android:id="@+id/groupsFragment"
+        android:icon="@drawable/ic_group"
+        android:title="groups" />
+
+    <item
+        android:id="@+id/searchContactFragment"
+        android:icon="@drawable/ic_search"
+        android:title="search" />
+
+    <item
+        android:id="@+id/userProfileFragment"
+        android:icon="@drawable/ic_other_user"
+        android:title="Profile" />
+
+</menu>

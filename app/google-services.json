@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "217306933773",
+    "firebase_url": "https://leetschat-default-rtdb.firebaseio.com",
+    "project_id": "leetschat",
+    "storage_bucket": "leetschat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217306933773:android:7049d496426b66574fc344",
+        "android_client_info": {
+          "package_name": "com.example.realchat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "217306933773-eajbq7q7di41u6odtihnosfgidqo32ga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.realchat",
+            "certificate_hash": "d2f9bb7259abbb096360d34a2aed07b1c3a68121"
+          }
+        },
+        {
+          "client_id": "217306933773-tfgdbh8ea2f7no0egoepsp598gu68psc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqFmiJDqPRv51meGOhbLxdIJMi54iWMaU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "217306933773-tfgdbh8ea2f7no0egoepsp598gu68psc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
