@@ -5,6 +5,12 @@
         android:id="@+id/chatsFragment"
         android:icon="@drawable/ic_contact_add"
         android:title="chat" />
+
+    <item
+        android:id="@+id/findFriendFragment"
+        android:icon="@drawable/baseline_person_pin_circle_24"
+        android:title="users" />
+
     <item
         android:id="@+id/groupsFragment"
         android:icon="@drawable/ic_group"
@@ -17,7 +23,7 @@
 
     <item
         android:id="@+id/userProfileFragment"
-        android:icon="@drawable/ic_other_user"
+        android:icon="@drawable/baseline_settings_24"
         android:title="Profile" />
 
 </menu>

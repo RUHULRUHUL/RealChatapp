@@ -9,16 +9,20 @@ import androidx.fragment.app.Fragment
 import com.example.realchat.databinding.FragmentUserProfileBinding
 import com.example.realchat.model.profile.UserProfile
 import com.example.realchat.utils.Validator
+import com.example.realchat.view.activity.FriendRequestActivity
 import com.example.realchat.view.authUi.SignInActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
 class UserProfileFragment : Fragment() {
     private lateinit var binding: FragmentUserProfileBinding
-    private lateinit var database: DatabaseReference
+    private lateinit var ref: DatabaseReference
     private lateinit var auth: FirebaseAuth
 
     override fun onCreateView(
@@ -28,12 +32,39 @@ class UserProfileFragment : Fragment() {
         binding = FragmentUserProfileBinding.inflate(layoutInflater)
         initValue()
         clickEvent()
+        getProfileData()
         return binding.root
+    }
+
+    private fun getProfileData() {
+        auth.currentUser?.let {
+            ref.child("Users").child(it.uid)
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+
+                        if (snapshot.exists()) {
+                            val name = snapshot.child("name").value.toString().trim()
+                            val phone = snapshot.child("phone").value.toString().trim()
+                            val status = snapshot.child("status").value.toString().trim()
+                            binding.userNameET.setText(name)
+                            binding.statusET.setText(status)
+                            binding.mobileET.setText(phone)
+                        }
+
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        Validator.showToast(requireContext(), "onCancelled")
+                    }
+
+                })
+        }
+
     }
 
     private fun initValue() {
         auth = Firebase.auth
-        database = Firebase.database.reference
+        ref = Firebase.database.reference
     }
 
     private fun clickEvent() {
@@ -46,16 +77,21 @@ class UserProfileFragment : Fragment() {
             }
         }
 
+        binding.requestShowBtn.setOnClickListener {
+            startActivity(Intent(requireContext(), FriendRequestActivity::class.java))
+        }
+
         binding.updateButton.setOnClickListener {
             if (Validator.inputFieldValidation(binding.userNameET, "Provide Name")
                 && Validator.inputFieldValidation(binding.statusET, "Provide Name")
-                && Validator.validatePhone(binding.mobileET, "provide correct mobile number")) {
+                && Validator.validatePhone(binding.mobileET, "provide correct mobile number")
+            ) {
                 val userProfile = UserProfile(
                     Validator.getValeFromEdiText(binding.userNameET),
                     Validator.getValeFromEdiText(binding.statusET),
                     Validator.getValeFromEdiText(binding.mobileET),
                 )
-                database.child("Users").child(auth.uid.toString()).setValue(userProfile)
+                ref.child("Users").child(auth.uid.toString()).setValue(userProfile)
                     .addOnCompleteListener {
                         if (it.isSuccessful) {
                             Validator.showToast(requireContext(), "update successfully")

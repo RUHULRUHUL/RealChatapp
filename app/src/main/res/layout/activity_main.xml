@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".view.MainActivity">
 
-
-    <com.google.android.material.appbar.AppBarLayout
+<!--    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="45dp"
@@ -43,7 +42,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </com.google.android.material.appbar.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>-->
 
 
     <fragment
@@ -52,12 +51,11 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_above="@id/bottomNav"
-        android:layout_below="@id/appBarLayout"
         app:defaultNavHost="true"
         app:layout_constraintBottom_toTopOf="@+id/bottomNav"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/nav">
 
     </fragment>

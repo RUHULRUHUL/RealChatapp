@@ -70,10 +70,10 @@
                 app:layout_constraintTop_toBottomOf="@id/statusET" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/topLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/mobileET">
@@ -82,9 +82,9 @@
                     android:id="@+id/logOut"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="log Out"
-                    android:paddingHorizontal="50dp"
                     android:background="@drawable/shape_border_line"
+                    android:paddingHorizontal="50dp"
+                    android:text="log Out"
                     app:layout_constraintEnd_toStartOf="@id/updateButton"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -93,15 +93,30 @@
                     android:id="@+id/updateButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="update"
                     android:background="@drawable/shape_gradient"
                     android:paddingHorizontal="50dp"
+                    android:text="update"
+                    android:textColor="@color/white"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/logOut"
                     app:layout_constraintTop_toTopOf="parent" />
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/requestShowBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="50dp"
+                android:background="@drawable/shape_audio_bg"
+                android:paddingHorizontal="50dp"
+                android:text="friend request"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/topLayout" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

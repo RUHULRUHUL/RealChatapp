@@ -3,10 +3,106 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".view.activity.ChatActivity">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <RelativeLayout
+            android:id="@+id/toolbarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="10dp"
+            android:background="@color/white">
+
+            <com.mikhaellopez.circularimageview.CircularImageView
+                android:id="@+id/custom_profile_image"
+                android:layout_width="25dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="12dp"
+                android:src="@drawable/ic_other_user" />
+
+            <TextView
+                android:id="@+id/custom_profile_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="15dp"
+                android:text="Display Username:"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/custom_user_last_seen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/custom_profile_name"
+                android:layout_alignParentLeft="true"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="5dp"
+                android:text="Last seen:"
+                android:textColor="@color/black"
+                android:textSize="12sp" />
+
+        </RelativeLayout>
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/private_message_list_of_users"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/chat_linear_layout"
+            android:layout_below="@+id/toolbarLayout"
+            android:layout_marginBottom="6dp" />
+
+        <RelativeLayout
+            android:id="@+id/chat_linear_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="5dp"
+            android:background="@android:color/background_light"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/send_files_btn"
+                android:layout_width="60dp"
+                android:layout_height="50dp"
+                android:layout_alignParentLeft="true"
+                android:backgroundTint="@android:color/white"
+                android:src="@drawable/baseline_attach_file_24"></ImageButton>
+
+            <EditText
+                android:id="@+id/input_messages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/send_message_btn"
+                android:layout_toRightOf="@id/send_files_btn"
+                android:background="@drawable/editext_bg"
+                android:hint="Type a message"
+                android:padding="15dp"></EditText>
+
+            <ImageButton
+                android:id="@+id/send_message_btn"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:backgroundTint="@android:color/white"
+                android:src="@drawable/baseline_send_24">
+
+            </ImageButton>
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
 </layout>
