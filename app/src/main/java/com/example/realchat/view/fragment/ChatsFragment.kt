@@ -32,6 +32,8 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater)
         initValue()
 
+        binding.toolbar.mainAppBar.title = "My Contacts"
+
         chatRef = FirebaseDatabase.getInstance().reference.child("Contacts").child(userID)
         userRef = FirebaseDatabase.getInstance().reference.child("Users")
 

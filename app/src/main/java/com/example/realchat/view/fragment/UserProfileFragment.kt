@@ -30,6 +30,7 @@ class UserProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentUserProfileBinding.inflate(layoutInflater)
+        binding.toolbar.title = "Profile Setting"
         initValue()
         clickEvent()
         getProfileData()

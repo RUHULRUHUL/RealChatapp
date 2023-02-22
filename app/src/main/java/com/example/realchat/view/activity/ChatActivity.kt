@@ -287,9 +287,7 @@ class ChatActivity : AppCompatActivity() {
         } else {
             val messageSenderRef = "Messages/$messageSenderId/$messageRecieverId"
             val messageReceiverRef = "Messages/$messageRecieverId/$messageSenderId"
-            val Usermessagekeyref = RootRef.child("Messages").child(messageSenderId!!).child(
-                messageRecieverId
-            ).push()
+            val Usermessagekeyref = RootRef.child("Messages").child(messageSenderId!!).child(messageRecieverId).push()
             val messagePushID = Usermessagekeyref.key
             val messageTextBody = HashMap<String, Any?>()
             messageTextBody["message"] = messagetext
@@ -310,15 +308,6 @@ class ChatActivity : AppCompatActivity() {
                     }
                     binding.inputMessages.setText("")
                 }
-/*                .addOnCompleteListener(object : OnCompleteListener<Any?> {
-                    fun onComplete(task: Task<*>) {
-                        if (task.isSuccessful) {
-                        } else {
-                            Toast.makeText(this@ChatActivity, "Error:", Toast.LENGTH_SHORT).show()
-                        }
-                        binding.inputMessages.setText("")
-                    }
-                })*/
         }
     }
 }

@@ -28,6 +28,9 @@ class FindFriendFragment : Fragment() {
     ): View {
         binding = FragmentFindFriendBinding.inflate(inflater)
         initValue()
+
+        binding.toolbar.mainAppBar.title = "All Users"
+
         displayUsers()
         return binding.root
     }

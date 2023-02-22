@@ -8,11 +8,35 @@
         android:layout_height="match_parent"
         tools:context=".view.activity.FriendRequestActivity">
 
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:elevation="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:text="Friend Request Send" />
+
+        </androidx.appcompat.widget.Toolbar>
+
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/friendRequestSentRV"
             android:layout_width="match_parent"
-            tools:listitem="@layout/users_display_layout"
-            android:layout_height="match_parent"/>
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            tools:listitem="@layout/users_display_layout" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

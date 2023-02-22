@@ -13,8 +13,8 @@
             android:id="@+id/toolbarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:elevation="10dp"
-            android:background="@color/white">
+            android:background="@color/white"
+            android:elevation="2dp">
 
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:id="@+id/custom_profile_image"
@@ -47,13 +47,11 @@
                 android:layout_below="@id/custom_profile_name"
                 android:layout_alignParentLeft="true"
                 android:layout_marginStart="15dp"
-                android:layout_marginTop="5dp"
-                android:text="Last seen:"
+                android:text="last seen"
                 android:textColor="@color/black"
                 android:textSize="12sp" />
 
         </RelativeLayout>
-
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/private_message_list_of_users"

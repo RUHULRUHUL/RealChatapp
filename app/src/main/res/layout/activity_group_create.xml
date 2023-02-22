@@ -4,46 +4,110 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray_scale"
     tools:context=".view.activity.GroupCreateActivity">
 
-
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/main_app_bar"
+    <RelativeLayout
+        android:id="@+id/toolbarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        android:elevation="5dp"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        android:elevation="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="Create Group"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-
         <ImageView
-            android:id="@+id/createGroup"
+            android:id="@+id/addUsers"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="15dp"
+            android:layout_marginRight="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/baseline_group_add_24" />
+
+        <TextView
+            android:id="@+id/custom_profile_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginEnd="15dp"
-            android:src="@drawable/baseline_edit_24" />
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="15dp"
+            android:text="Display Username:"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-    </androidx.appcompat.widget.Toolbar>
+        <TextView
+            android:id="@+id/custom_user_last_seen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/custom_profile_name"
+            android:layout_alignParentLeft="true"
+            android:layout_marginStart="15dp"
+            android:text="active users"
+            android:textColor="@color/black"
+            android:textSize="12sp" />
+
+    </RelativeLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/findFriendRV"
+        android:id="@+id/private_message_list_of_users"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_above="@id/chat_linear_layout"
+        android:layout_below="@+id/toolbarLayout"
+        android:layout_marginBottom="6dp"
+        app:layout_constraintBottom_toTopOf="@id/chat_linear_layout"
+        app:layout_constraintTop_toBottomOf="@+id/toolbarLayout" />
+
+    <RelativeLayout
+        android:id="@+id/chat_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="5dp"
+        android:background="@android:color/background_light"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/main_app_bar" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/send_files_btn"
+            android:layout_width="60dp"
+            android:layout_height="50dp"
+            android:layout_alignParentLeft="true"
+            android:backgroundTint="@android:color/white"
+            android:src="@drawable/baseline_attach_file_24"></ImageButton>
+
+        <EditText
+            android:id="@+id/input_messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@id/send_message_btn"
+            android:layout_toRightOf="@id/send_files_btn"
+            android:background="@drawable/editext_bg"
+            android:hint="Type a message"
+            android:padding="15dp"></EditText>
+
+        <ImageButton
+            android:id="@+id/send_message_btn"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:backgroundTint="@android:color/white"
+            android:src="@drawable/baseline_send_24">
+
+        </ImageButton>
+
+    </RelativeLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
