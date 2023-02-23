@@ -1,5 +1,6 @@
 package com.example.realchat.view.activity
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Intent
@@ -17,6 +18,8 @@ import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.MessageAdapter
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
@@ -48,6 +51,7 @@ class ChatActivity : AppCompatActivity() {
     private var fileuri: Uri? = null
     private var loadingBar: ProgressDialog? = null
 
+    @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
@@ -56,7 +60,7 @@ class ChatActivity : AppCompatActivity() {
 
         loadingBar = ProgressDialog(this)
         mauth = FirebaseAuth.getInstance()
-        messageSenderId = mauth!!.getCurrentUser()!!.uid
+        messageSenderId = mauth!!.currentUser!!.uid
         RootRef = FirebaseDatabase.getInstance().reference
 
         messageRecieverId = intent.extras!!["visit_user_id"].toString()
@@ -114,6 +118,7 @@ class ChatActivity : AppCompatActivity() {
             .child(messageSenderId!!)
             .child(messageRecieverId)
             .addChildEventListener(object : ChildEventListener {
+                @SuppressLint("NotifyDataSetChanged")
                 override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                     val messages = dataSnapshot.getValue(Messages::class.java)
                     if (messages != null) {
@@ -130,6 +135,7 @@ class ChatActivity : AppCompatActivity() {
             })
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (data != null) {
@@ -181,7 +187,7 @@ class ChatActivity : AppCompatActivity() {
                         val p = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
                         loadingBar!!.setMessage(p.toInt().toString() + " % Uploading...")
                     }
-                } /*else if (checker == "image") {
+                } else if (checker == "image") {
                     val storageReference =
                         FirebaseStorage.getInstance().reference.child("Image Files")
                     val messageSenderRef = "Messages/$messageSenderId/$messageRecieverId"
@@ -195,15 +201,14 @@ class ChatActivity : AppCompatActivity() {
                     val filepath = storageReference.child("$messagePushID.jpg")
                     uploadTask = filepath.putFile(fileuri!!)
 
-                    uploadTask.continueWithTask(object : Continuation<Any?, Any?> {
-                        @Throws(Exception::class)
-                        fun then(task: Task<*>): Any? {
-                            if (!task.isSuccessful) {
-                                throw task.exception!!
+                    val urlTask = uploadTask.continueWithTask { task ->
+                        if (!task.isSuccessful) {
+                            task.exception?.let {
+                                throw it
                             }
-                            return filepath.downloadUrl
                         }
-                    }).addOnCompleteListener(OnCompleteListener<Uri> { task ->
+                        filepath.downloadUrl
+                    }.addOnCompleteListener(OnCompleteListener<Uri> { task ->
                         if (task.isSuccessful) {
                             val downloadUrl = task.result
                             myUrl = downloadUrl.toString()
@@ -220,11 +225,10 @@ class ChatActivity : AppCompatActivity() {
                             messageBodyDetails["$messageSenderRef/$messagePushID"] = messageTextBody
                             messageBodyDetails["$messageReceiverRef/$messagePushID"] =
                                 messageTextBody
-                            RootRef!!.updateChildren(messageBodyDetails)
+                            RootRef.updateChildren(messageBodyDetails)
                                 .addOnCompleteListener {
                                     if (task.isSuccessful) {
                                         loadingBar!!.dismiss()
-                                        //Toast.makeText(ChatActivity.this,"Message sent Successfully...",Toast.LENGTH_SHORT).show();
                                     } else {
                                         loadingBar!!.dismiss()
                                         Toast.makeText(
@@ -233,10 +237,22 @@ class ChatActivity : AppCompatActivity() {
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                    binding.inputMessages!!.setText("")
+                                    binding.inputMessages.setText("")
+                                }.addOnCompleteListener {
+                                    if (task.isSuccessful) {
+                                        loadingBar!!.dismiss()
+                                    } else {
+                                        loadingBar!!.dismiss()
+                                        Toast.makeText(
+                                            this@ChatActivity,
+                                            "Error:",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    binding.inputMessages.setText("")
                                 }
-  */
-                /*                              .addOnCompleteListener(object : OnCompleteListener<Any?> {
+
+                        /*.addOnCompleteListener(object : OnCompleteListener<Any?> {
                                     fun onComplete(task: Task<*>) {
                                         if (task.isSuccessful) {
                                             loadingBar!!.dismiss()
@@ -252,10 +268,10 @@ class ChatActivity : AppCompatActivity() {
                                         binding.inputMessages!!.setText("")
                                     }
                                 })*/
-                /*
+
                         }
                     })
-                }*/ else {
+                } else {
                     loadingBar!!.dismiss()
                     Toast.makeText(this, "please select file", Toast.LENGTH_SHORT).show()
                 }
@@ -263,7 +279,7 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    fun Displaylastseen() {
+    private fun Displaylastseen() {
         RootRef.child("Users").child(messageRecieverId)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -293,8 +309,8 @@ class ChatActivity : AppCompatActivity() {
         } else {
             val messageSenderRef = "Messages/$messageSenderId/$messageRecieverId"
             val messageReceiverRef = "Messages/$messageRecieverId/$messageSenderId"
-            val Usermessagekeyref = RootRef.child("Messages").child(messageSenderId!!).child(messageRecieverId).push()
-            val messagePushID = Usermessagekeyref.key
+            val userMessageKeyRef = RootRef.child("Messages").child(messageSenderId!!).child(messageRecieverId).push()
+            val messagePushID = userMessageKeyRef.key
             val messageTextBody = HashMap<String, Any?>()
             messageTextBody["message"] = messagetext
             messageTextBody["type"] = "text"
@@ -308,10 +324,6 @@ class ChatActivity : AppCompatActivity() {
             messageBodyDetails["$messageReceiverRef/$messagePushID"] = messageTextBody
             RootRef.updateChildren(messageBodyDetails)
                 .addOnCompleteListener {
-                    if (it.isSuccessful) {
-                    } else {
-                        Toast.makeText(this@ChatActivity, "Error:", Toast.LENGTH_SHORT).show()
-                    }
                     binding.inputMessages.setText("")
                 }
         }
