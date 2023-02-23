@@ -15,11 +15,11 @@
         android:name="com.example.realchat.view.fragment.GroupsFragment"
         android:label="fragment_groups"
         tools:layout="@layout/fragment_groups" />
-    <fragment
+<!--    <fragment
         android:id="@+id/searchContactFragment"
         android:name="com.example.realchat.view.fragment.SearchContactFragment"
         android:label="fragment_search_contact"
-        tools:layout="@layout/fragment_search_contact" />
+        tools:layout="@layout/fragment_search_contact" />-->
     <fragment
         android:id="@+id/userProfileFragment"
         android:name="com.example.realchat.view.fragment.UserProfileFragment"

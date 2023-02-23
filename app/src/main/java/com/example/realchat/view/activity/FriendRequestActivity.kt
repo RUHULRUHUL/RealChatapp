@@ -11,7 +11,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.ActivityFriendRequestBinding
 import com.example.realchat.databinding.UsersDisplayLayoutBinding
-import com.example.realchat.model.profile.UserProfile
+import com.example.realchat.model.profile.ActiveStatus
+import com.example.realchat.model.profile.User
+import com.example.realchat.utils.DBReference
+import com.example.realchat.utils.Utils
+import com.example.realchat.utils.Validator
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -44,16 +48,19 @@ class FriendRequestActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val options: FirebaseRecyclerOptions<UserProfile> =
-            FirebaseRecyclerOptions.Builder<UserProfile>()
-                .setQuery(chatrequestRef!!.child(currentUserId!!), UserProfile::class.java)
+
+        userStatusUpdate("online")
+
+        val options: FirebaseRecyclerOptions<User> =
+            FirebaseRecyclerOptions.Builder<User>()
+                .setQuery(chatrequestRef!!.child(currentUserId!!), User::class.java)
                 .build()
-        val adapter: FirebaseRecyclerAdapter<UserProfile, RequestViewHolder> =
-            object : FirebaseRecyclerAdapter<UserProfile, RequestViewHolder>(options) {
+        val adapter: FirebaseRecyclerAdapter<User, RequestViewHolder> =
+            object : FirebaseRecyclerAdapter<User, RequestViewHolder>(options) {
                 protected override fun onBindViewHolder(
                     holder: RequestViewHolder,
                     position: Int,
-                    model: UserProfile
+                    model: User
                 ) {
                     holder.binding.requestAcceptButton.visibility = View.VISIBLE
                     holder.binding.requestCancelButton.visibility = View.VISIBLE
@@ -268,4 +275,46 @@ class FriendRequestActivity : AppCompatActivity() {
 
     class RequestViewHolder(val binding: UsersDisplayLayoutBinding) :
         RecyclerView.ViewHolder(binding.root)
+
+
+    override fun onPause() {
+        super.onPause()
+        userStatusUpdate("offline")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        userStatusUpdate("offline")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        userStatusUpdate("offline")
+    }
+
+    private fun userStatusUpdate(state: String) {
+        if (Utils.isNetworkAvailable(this)) {
+            val activeStatus = ActiveStatus(
+                state,
+                Validator.getCurrentDate(),
+                Validator.getCurrentTime()
+            )
+            DBReference.userRef
+                .child(mauth?.uid.toString())
+                .child("UserState")
+                .setValue(activeStatus)
+        }
+    }
 }

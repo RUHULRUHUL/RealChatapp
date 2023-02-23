@@ -12,6 +12,9 @@
         android:theme="@style/Theme.RealChat"
         tools:targetApi="31">
         <activity
+            android:name=".view.activity.SearchUserActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.activity.AddGroupUserActivity"
             android:exported="false" />
         <activity

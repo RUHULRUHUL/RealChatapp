@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.realchat.databinding.ActivityGroupCreateBinding
 import com.example.realchat.model.message.GroupMessage
 import com.example.realchat.utils.DBReference
+import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.GroupMessageAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -24,6 +25,8 @@ class GroupCreateActivity : AppCompatActivity() {
     private val messagesList = ArrayList<GroupMessage>()
     private lateinit var userRef: DatabaseReference
     private lateinit var groupRef: DatabaseReference
+
+    private var groupName = ""
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +76,9 @@ class GroupCreateActivity : AppCompatActivity() {
         }
 
         binding.addUsers.setOnClickListener {
-            startActivity(Intent(this, AddGroupUserActivity::class.java))
+            val intent = Intent(this,AddGroupUserActivity::class.java)
+            intent.putExtra("groupName",groupName)
+            startActivity(intent)
         }
     }
 
@@ -99,6 +104,8 @@ class GroupCreateActivity : AppCompatActivity() {
             .child(intent.getStringExtra("groupName").toString().trim())
 
         binding.customProfileName.text = intent.getStringExtra("groupName")
+        groupName = binding.customProfileName.text.toString().trim()
+
 
     }
 

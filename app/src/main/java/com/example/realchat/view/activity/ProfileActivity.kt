@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.realchat.databinding.ActivityProfileBinding
+import com.example.realchat.model.profile.ActiveStatus
+import com.example.realchat.utils.DBReference
+import com.example.realchat.utils.Utils
+import com.example.realchat.utils.Validator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -18,7 +22,7 @@ class ProfileActivity : AppCompatActivity() {
     var ref: DatabaseReference? = null
     var chatrequestref: DatabaseReference? = null
     var contactsRef: DatabaseReference? = null
-    var NotificationRef: DatabaseReference? = null
+    private var notificationRef: DatabaseReference? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +74,7 @@ class ProfileActivity : AppCompatActivity() {
         ref = FirebaseDatabase.getInstance().reference
         chatrequestref = FirebaseDatabase.getInstance().reference.child("Chat Requests")
         contactsRef = FirebaseDatabase.getInstance().reference.child("Contacts")
-        NotificationRef = FirebaseDatabase.getInstance().reference.child("Notifications")
+        notificationRef = FirebaseDatabase.getInstance().reference.child("Notifications")
     }
 
 
@@ -211,7 +215,7 @@ class ProfileActivity : AppCompatActivity() {
                                 val chatnotificationMap = HashMap<String, String>()
                                 chatnotificationMap["from"] = sender_user_id!!
                                 chatnotificationMap["type"] = "request"
-                                NotificationRef!!.child(reciever_id!!).push()
+                                notificationRef!!.child(reciever_id!!).push()
                                     .setValue(chatnotificationMap)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
@@ -225,6 +229,55 @@ class ProfileActivity : AppCompatActivity() {
                         }
                 }
             }
+    }
+
+
+
+    override fun onStart() {
+        super.onStart()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        userStatusUpdate("offline")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        userStatusUpdate("offline")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        userStatusUpdate("offline")
+    }
+
+    private fun userStatusUpdate(state: String) {
+        if (Utils.isNetworkAvailable(this)) {
+            val activeStatus = ActiveStatus(
+                state,
+                Validator.getCurrentDate(),
+                Validator.getCurrentTime()
+            )
+            DBReference.userRef
+                .child(mauth?.uid.toString())
+                .child("UserState")
+                .setValue(activeStatus)
+        }
     }
 
 

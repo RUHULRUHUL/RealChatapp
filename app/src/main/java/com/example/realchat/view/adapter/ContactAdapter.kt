@@ -11,6 +11,7 @@ import com.example.realchat.R
 import com.example.realchat.databinding.UsersDisplayLayoutBinding
 import com.example.realchat.model.profile.User
 import com.example.realchat.utils.DBReference.Companion.userRef
+import com.example.realchat.utils.Validator
 import com.example.realchat.view.activity.ChatActivity
 import com.example.realchat.view.activity.ProfileActivity
 import com.example.realchat.view.fragment.ChatsFragment
@@ -20,13 +21,13 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 
-class AllUsersAdapter(
+class ContactAdapter (
     options: FirebaseRecyclerOptions<User>,
     val context: Context
-) : FirebaseRecyclerAdapter<User, AllUsersAdapter.ViewHolder>(options) {
+) : FirebaseRecyclerAdapter<User, ContactAdapter.ChatViewHolder>(options) {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        return ViewHolder(
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
+        return ChatViewHolder(
             UsersDisplayLayoutBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -35,33 +36,32 @@ class AllUsersAdapter(
         )
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int, model: User) {
-        holder.binding.usersProfileName.text = model.name
+    override fun onBindViewHolder(holder: ChatViewHolder, position: Int, model: User) {
         val userid = getRef(position).key
+        val image = arrayOf("default_image")
         if (userid != null) {
             userRef.child(userid)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         if (dataSnapshot.exists()) {
-                            if (dataSnapshot.child("UserState").hasChild("state")) {
+                            val name = dataSnapshot.child("name").value.toString()
+                            holder.binding.usersProfileName.text = name
+                            if (dataSnapshot.child("userState").hasChild("state")) {
                                 val state = dataSnapshot.child("UserState")
                                     .child("state").value.toString()
-
-                                val time = dataSnapshot.child("UserState")
-                                    .child("time").value.toString()
-
-                                val date = dataSnapshot.child("UserState")
-                                    .child("date").value.toString()
-
-                                holder.binding.usersStatus.text = "$time-$date"
-
-                                if (state.equals("online", false)) {
+                                if (state == "online") {
                                     holder.binding.stateImg.visibility = View.VISIBLE
                                 } else {
                                     holder.binding.stateImg.visibility = View.GONE
                                 }
-                            } else {
-                                holder.binding.stateImg.visibility = View.GONE
+                            }
+
+                            holder.itemView.setOnClickListener {
+                                val chatIntent = Intent(context, ChatActivity::class.java)
+                                chatIntent.putExtra("visit_user_id", userid)
+                                chatIntent.putExtra("visit_user_name", name)
+                                chatIntent.putExtra("visit_image", image[0])
+                                context.startActivity(chatIntent)
                             }
                         }
                     }
@@ -69,16 +69,7 @@ class AllUsersAdapter(
                     override fun onCancelled(databaseError: DatabaseError) {}
                 })
         }
-
-
-        holder.itemView.setOnClickListener {
-            val chatIntent = Intent(context, ProfileActivity::class.java)
-            chatIntent.putExtra("visit_user_id", getRef(position).key)
-            chatIntent.putExtra("visit_user_name", model.name)
-            context.startActivity(chatIntent)
-        }
     }
 
-    class ViewHolder(val binding: UsersDisplayLayoutBinding) : RecyclerView.ViewHolder(binding.root)
-
+    class ChatViewHolder(val binding: UsersDisplayLayoutBinding) : RecyclerView.ViewHolder(binding.root)
 }

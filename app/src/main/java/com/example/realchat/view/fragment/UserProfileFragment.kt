@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.example.realchat.databinding.FragmentUserProfileBinding
-import com.example.realchat.model.profile.UserProfile
+import com.example.realchat.model.profile.User
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.activity.FriendRequestActivity
 import com.example.realchat.view.authUi.SignInActivity
@@ -87,12 +87,13 @@ class UserProfileFragment : Fragment() {
                 && Validator.inputFieldValidation(binding.statusET, "Provide Name")
                 && Validator.validatePhone(binding.mobileET, "provide correct mobile number")
             ) {
-                val userProfile = UserProfile(
+                val user = User(
                     Validator.getValeFromEdiText(binding.userNameET),
+                    auth.uid.toString(),
                     Validator.getValeFromEdiText(binding.statusET),
                     Validator.getValeFromEdiText(binding.mobileET),
                 )
-                ref.child("Users").child(auth.uid.toString()).setValue(userProfile)
+                ref.child("Users").child(auth.uid.toString()).setValue(user)
                     .addOnCompleteListener {
                         if (it.isSuccessful) {
                             Validator.showToast(requireContext(), "update successfully")

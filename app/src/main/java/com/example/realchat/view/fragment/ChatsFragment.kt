@@ -10,9 +10,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.FragmentChatsBinding
 import com.example.realchat.databinding.UsersDisplayLayoutBinding
-import com.example.realchat.model.profile.UserProfile
+import com.example.realchat.model.profile.User
 import com.example.realchat.view.activity.ChatActivity
-import com.example.realchat.view.adapter.ActiveChatAdapter
+import com.example.realchat.view.activity.SearchUserActivity
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -31,8 +31,9 @@ class ChatsFragment : Fragment() {
     ): View {
         binding = FragmentChatsBinding.inflate(inflater)
         initValue()
+        clickEvent()
 
-        binding.toolbar.mainAppBar.title = "My Contacts"
+        binding.toolbar.title = "My Contacts"
 
         chatRef = FirebaseDatabase.getInstance().reference.child("Contacts").child(userID)
         userRef = FirebaseDatabase.getInstance().reference.child("Users")
@@ -43,60 +44,70 @@ class ChatsFragment : Fragment() {
         return binding.root
     }
 
+    private fun clickEvent() {
+        binding.searchUsers.setOnClickListener {
+            startActivity(Intent(requireContext(), SearchUserActivity::class.java))
+
+        }
+    }
+
 
     override fun onStart() {
         super.onStart()
-        val options: FirebaseRecyclerOptions<UserProfile> =
-            FirebaseRecyclerOptions.Builder<UserProfile>()
-                .setQuery(chatRef, UserProfile::class.java).build()
-        val adapter: FirebaseRecyclerAdapter<UserProfile, ChatViewHolder> =
-            object : FirebaseRecyclerAdapter<UserProfile, ChatViewHolder>(options) {
+        val options: FirebaseRecyclerOptions<User> =
+            FirebaseRecyclerOptions.Builder<User>()
+                .setQuery(chatRef, User::class.java).build()
+        val adapter: FirebaseRecyclerAdapter<User, ChatViewHolder> =
+            object : FirebaseRecyclerAdapter<User, ChatViewHolder>(options) {
                 protected override fun onBindViewHolder(
                     holder: ChatViewHolder,
                     position: Int,
-                    model: UserProfile
+                    model: User
                 ) {
                     val userid = getRef(position).key
                     val image = arrayOf("default_image")
-                    userRef.child(userid!!)
-                        .addValueEventListener(object : ValueEventListener {
-                            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                if (dataSnapshot.exists()) {
-                                    val name = dataSnapshot.child("name").value.toString()
-                                    val status = dataSnapshot.child("status").value.toString()
-                                    holder.binding.usersProfileName.text = name
-                                    holder.binding.usersStatus.text = """
-                            Last seen: 
-                            Date  Time
-                            """.trimIndent()
-                                    if (dataSnapshot.child("userState").hasChild("state")) {
-                                        val state = dataSnapshot.child("userState")
-                                            .child("state").value.toString()
-                                        val date = dataSnapshot.child("userState")
-                                            .child("date").value.toString()
-                                        val time = dataSnapshot.child("userState")
-                                            .child("time").value.toString()
-                                        if (state == "online") {
-                                            holder.binding.usersStatus.text = "online"
-                                        } else if (state == "offline") {
-                                            holder.binding.usersStatus.text =
-                                                "Last seen: \n$date $time"
+                    if (userid != null) {
+                        userRef.child(userid)
+                            .addValueEventListener(object : ValueEventListener {
+                                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                    if (dataSnapshot.exists()) {
+                                        val name = dataSnapshot.child("name").value.toString()
+                                        holder.binding.usersProfileName.text = name
+                                        if (dataSnapshot.child("UserState").hasChild("state")) {
+                                            val state = dataSnapshot.child("UserState")
+                                                .child("state").value.toString()
+
+                                            val time = dataSnapshot.child("UserState")
+                                                .child("time").value.toString()
+
+                                            val date = dataSnapshot.child("UserState")
+                                                .child("date").value.toString()
+
+                                            holder.binding.usersStatus.text = "$time-$date"
+
+                                            if (state.equals("online", false)) {
+                                                holder.binding.stateImg.visibility = View.VISIBLE
+                                            } else {
+                                                holder.binding.stateImg.visibility = View.GONE
+                                            }
+
+
                                         }
-                                    } else {
-                                        holder.binding.usersStatus.text = "offline"
-                                    }
-                                    holder.itemView.setOnClickListener {
-                                        val chatIntent = Intent(context, ChatActivity::class.java)
-                                        chatIntent.putExtra("visit_user_id", userid)
-                                        chatIntent.putExtra("visit_user_name", name)
-                                        chatIntent.putExtra("visit_image", image[0])
-                                        startActivity(chatIntent)
+
+                                        holder.itemView.setOnClickListener {
+                                            val chatIntent =
+                                                Intent(context, ChatActivity::class.java)
+                                            chatIntent.putExtra("visit_user_id", userid)
+                                            chatIntent.putExtra("visit_user_name", name)
+                                            chatIntent.putExtra("visit_image", image[0])
+                                            startActivity(chatIntent)
+                                        }
                                     }
                                 }
-                            }
 
-                            override fun onCancelled(databaseError: DatabaseError) {}
-                        })
+                                override fun onCancelled(databaseError: DatabaseError) {}
+                            })
+                    }
                 }
 
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
@@ -114,9 +125,7 @@ class ChatsFragment : Fragment() {
     }
 
     class ChatViewHolder(val binding: UsersDisplayLayoutBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-    }
-
+        RecyclerView.ViewHolder(binding.root)
 
     private fun initValue() {
         mAuth = FirebaseAuth.getInstance()

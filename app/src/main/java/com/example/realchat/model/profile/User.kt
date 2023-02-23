@@ -1,9 +1,11 @@
 package com.example.realchat.model.profile
 
-data class UserProfile(
+data class User(
     val name: String = "",
+    val uid: String = "",
     val status: String = "",
     val phone: String = "",
-){
-    constructor():this("","","")
+    val state: String = ""
+) {
+    constructor() : this("", "", "", "","")
 }

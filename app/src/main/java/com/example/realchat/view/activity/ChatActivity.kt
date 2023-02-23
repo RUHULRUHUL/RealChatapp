@@ -12,6 +12,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.model.message.Messages
+import com.example.realchat.model.profile.ActiveStatus
+import com.example.realchat.utils.DBReference
+import com.example.realchat.utils.Utils
+import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.MessageAdapter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
@@ -231,7 +235,8 @@ class ChatActivity : AppCompatActivity() {
                                     }
                                     binding.inputMessages!!.setText("")
                                 }
-  *//*                              .addOnCompleteListener(object : OnCompleteListener<Any?> {
+  */
+                /*                              .addOnCompleteListener(object : OnCompleteListener<Any?> {
                                     fun onComplete(task: Task<*>) {
                                         if (task.isSuccessful) {
                                             loadingBar!!.dismiss()
@@ -246,7 +251,8 @@ class ChatActivity : AppCompatActivity() {
                                         }
                                         binding.inputMessages!!.setText("")
                                     }
-                                })*//*
+                                })*/
+                /*
                         }
                     })
                 }*/ else {
@@ -308,6 +314,52 @@ class ChatActivity : AppCompatActivity() {
                     }
                     binding.inputMessages.setText("")
                 }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        userStatusUpdate("offline")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userStatusUpdate("online")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        userStatusUpdate("online")
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        userStatusUpdate("offline")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        userStatusUpdate("offline")
+    }
+
+    private fun userStatusUpdate(state: String) {
+        if (Utils.isNetworkAvailable(this)) {
+            val activeStatus = ActiveStatus(
+                state,
+                Validator.getCurrentDate(),
+                Validator.getCurrentTime()
+            )
+            DBReference.userRef
+                .child(mauth?.uid.toString())
+                .child("UserState")
+                .setValue(activeStatus)
         }
     }
 }

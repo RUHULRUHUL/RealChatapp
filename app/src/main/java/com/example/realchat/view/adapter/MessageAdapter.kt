@@ -37,13 +37,11 @@ class MessageAdapter(
         val messages = UserMessageList[position]
         val fromuserid = messages.from
         val frommessagetype = messages.type
-        userRef = fromuserid?.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
+        userRef = fromuserid.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
         userRef!!.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChild("image")) {
                     val receiverprofileimage = dataSnapshot.child("image").value.toString()
-/*                    Picasso.get().load(receiverprofileimage).placeholder(R.drawable.profile_image)
-                        .into(holder.receiverprofileimage)*/
                 }
             }
 

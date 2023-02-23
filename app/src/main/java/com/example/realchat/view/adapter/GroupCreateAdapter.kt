@@ -10,17 +10,17 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.R
 import com.example.realchat.helper.GroupMemberAddCallBack
-import com.example.realchat.model.profile.UserProfile
+import com.example.realchat.model.profile.User
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions
 
 class GroupCreateAdapter(
-    private val options: FirebaseRecyclerOptions<UserProfile>,
+    private val options: FirebaseRecyclerOptions<User>,
     val context: Context
-) : FirebaseRecyclerAdapter<UserProfile, GroupCreateAdapter.ViewHolder>(options) {
+) : FirebaseRecyclerAdapter<User, GroupCreateAdapter.ViewHolder>(options) {
 
     private lateinit var callBack: GroupMemberAddCallBack
-    private var list = ArrayList<UserProfile>()
+    private var list = ArrayList<User>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view: View =
@@ -29,7 +29,7 @@ class GroupCreateAdapter(
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int, model: UserProfile) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, model: User) {
         holder.username.text = model.name
         holder.checkBox.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
 

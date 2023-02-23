@@ -2,6 +2,7 @@ package com.example.realchat.view.adapter
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,14 +10,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.R
 import com.example.realchat.model.profile.User
-import com.example.realchat.view.activity.ChatActivity
-import com.firebase.ui.database.FirebaseRecyclerAdapter
-import com.firebase.ui.database.FirebaseRecyclerOptions
+import com.example.realchat.view.activity.ProfileActivity
 
-class ActiveChatAdapter(
-    options: FirebaseRecyclerOptions<User>,
+class UserSearchAdapter(
+    private val list: ArrayList<User>,
     val context: Context
-) : FirebaseRecyclerAdapter<User, ActiveChatAdapter.ViewHolder>(options) {
+) : RecyclerView.Adapter<UserSearchAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view: View =
@@ -25,15 +24,26 @@ class ActiveChatAdapter(
         return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int, model: User) {
-        holder.username.text = model.name
+    override fun getItemCount(): Int {
+        return list.size
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val profile = list[position]
+
+        Log.d("userName", "name " + profile.name.toString())
+        Log.d("userName", "status " + profile.status.toString())
+        Log.d("userName", "phone " + profile.phone.toString())
+
+        holder.username.text = profile.name
         holder.itemView.setOnClickListener {
-            val chatIntent = Intent(context, ChatActivity::class.java)
-            chatIntent.putExtra("visit_user_id", getRef(position).key)
-            chatIntent.putExtra("visit_user_name", model.name)
+            val chatIntent = Intent(context, ProfileActivity::class.java)
+            chatIntent.putExtra("visit_user_id", profile.uid)
+            chatIntent.putExtra("visit_user_name", profile.name)
             context.startActivity(chatIntent)
         }
     }
+
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var username: TextView

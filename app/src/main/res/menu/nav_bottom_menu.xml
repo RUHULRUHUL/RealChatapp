@@ -16,10 +16,10 @@
         android:icon="@drawable/ic_group"
         android:title="groups" />
 
-    <item
+<!--    <item
         android:id="@+id/searchContactFragment"
         android:icon="@drawable/ic_search"
-        android:title="search" />
+        android:title="search" />-->
 
     <item
         android:id="@+id/userProfileFragment"

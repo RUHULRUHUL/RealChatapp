@@ -19,6 +19,7 @@ class Validator {
 
     companion object {
         private val PHONE_NUMBER = Pattern.compile("^(?:\\+?88)?01[15-9]\\d{8}$")
+        private val calendar: Calendar = Calendar.getInstance()
 
         fun inputFieldValidation(
             textInputEditText: TextInputEditText,
@@ -43,6 +44,18 @@ class Validator {
             }
             return date
         }
+
+        @SuppressLint("SimpleDateFormat")
+        fun getCurrentDate(): String {
+            val currentDate = SimpleDateFormat("dd/MM/yyyy")
+            return currentDate.format(calendar.time)
+        }
+        @SuppressLint("SimpleDateFormat")
+        fun getCurrentTime(): String {
+            val currentTime = SimpleDateFormat("hh:mm:ss a")
+            return currentTime.format(calendar.time)
+        }
+
 
         fun getValeFromEdiText(editText: TextInputEditText): String {
             return editText.text.toString().trim()
@@ -103,54 +116,6 @@ class Validator {
 
     }
 
-
-    fun inputBabyAgeValidation(
-        textInputEditText: TextInputEditText,
-        errorMessage: String?
-    ): Boolean {
-        return if (Objects.requireNonNull(textInputEditText.text).toString().trim { it <= ' ' }
-                .isEmpty()) {
-            textInputEditText.error = errorMessage
-            textInputEditText.requestFocus()
-            false
-        } else if (textInputEditText.text.toString()
-                .trim { it <= ' ' }.length < 1 || textInputEditText.text.toString()
-                .trim { it <= ' ' }.length >= 2
-        ) {
-            if (textInputEditText.text.toString().trim { it <= ' ' }.toInt() > 23) {
-                textInputEditText.error = errorMessage
-                textInputEditText.requestFocus()
-                false
-            } else {
-                true
-            }
-        } else {
-            true
-        }
-    }
-
-    fun inputBabyAgeValidationTest(
-        textInputEditText: TextInputEditText,
-        errorMessage: String?
-    ): Int {
-        if (Objects.requireNonNull(textInputEditText.text).toString().trim { it <= ' ' }
-                .isEmpty()) {
-            textInputEditText.error = errorMessage
-            textInputEditText.requestFocus()
-            return -1
-        } else if (textInputEditText.text.toString()
-                .trim { it <= ' ' }.isEmpty() || textInputEditText.text.toString()
-                .trim { it <= ' ' }.length >= 2
-        ) {
-            if (textInputEditText.text.toString().trim { it <= ' ' }.toInt() > 23) {
-                textInputEditText.error = errorMessage
-                textInputEditText.requestFocus()
-                return textInputEditText.text.toString().trim { it <= ' ' }.toInt()
-            }
-        }
-        return textInputEditText.text.toString().trim { it <= ' ' }.toInt()
-    }
-
     @SuppressLint("ResourceAsColor")
     fun datePicker(textView: TextView, context: Context?) {
         val c = Calendar.getInstance()
@@ -208,41 +173,6 @@ class Validator {
         return Objects.requireNonNull(textView.text).toString()
     }
 
-
-    fun mohilaAgeValidation(textInputEditText: TextInputEditText, errorMessage: String?): Boolean {
-        return if (Objects.requireNonNull(textInputEditText.text).toString().trim { it <= ' ' }
-                .isEmpty()) {
-            textInputEditText.error = errorMessage
-            textInputEditText.requestFocus()
-            false
-        } else if (textInputEditText.text.toString().trim { it <= ' ' }
-                .toInt() < 15 || textInputEditText.text.toString().trim { it <= ' ' }
-                .toInt() > 49) {
-            textInputEditText.error = "Age Should be between 15 to 49 Years"
-            textInputEditText.requestFocus()
-            false
-        } else {
-            true
-        }
-    }
-
-    fun inputNameValidation(textInputEditText: TextInputEditText, errorMessage: String?): Boolean {
-        return if (Objects.requireNonNull(textInputEditText.text).toString().trim { it <= ' ' }
-                .isEmpty()) {
-            textInputEditText.error = errorMessage
-            textInputEditText.requestFocus()
-            false
-        } else if (textInputEditText.text.toString()
-                .trim { it <= ' ' }.length < 3 || textInputEditText.text.toString()
-                .trim { it <= ' ' }.length >= 30
-        ) {
-            textInputEditText.error = "Should be 3 to 30 characters"
-            textInputEditText.requestFocus()
-            false
-        } else {
-            true
-        }
-    }
 
     fun inputDateOfBirthValidation(
         textInputEditText: TextInputEditText,

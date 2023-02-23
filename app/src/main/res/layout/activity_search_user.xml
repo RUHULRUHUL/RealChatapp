@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".view.activity.SearchUserActivity">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/appbarLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="0dp"
+            app:elevation="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <LinearLayout
+                android:id="@+id/appbar_layout_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="?actionBarSize"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:weightSum="5">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/back_press_id"
+                        android:layout_width="0dp"
+                        android:layout_height="30dp"
+                        android:layout_margin="10dp"
+                        android:layout_weight="0.5"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:scaleType="centerInside"
+                        android:tint="@color/black"
+                        app:srcCompat="@drawable/ic_arrow_back"
+                        tools:ignore="VectorDrawableCompat">
+
+                    </androidx.appcompat.widget.AppCompatImageView>
+
+                    <EditText
+                        android:id="@+id/searchView"
+                        android:layout_width="0dp"
+                        android:layout_height="30dp"
+                        android:layout_margin="5dp"
+                        android:layout_weight="3.5"
+                        android:background="@null"
+                        android:drawablePadding="5dp"
+                        android:hint="Search Find User"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:maxLength="20"
+                        android:maxLines="1"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/black"
+                        android:textColorHint="#B3B3B3"
+                        android:textSize="14sp"
+                        android:textStyle="normal">
+
+                    </EditText>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/CloseImg"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="10dp"
+                        android:layout_weight="0.3"
+                        android:background="?android:selectableItemBackgroundBorderless"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_close_24px"
+                        android:tint="@color/black"
+                        android:visibility="invisible">
+
+                    </androidx.appcompat.widget.AppCompatImageView>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/userRV"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/appbarLayout" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
