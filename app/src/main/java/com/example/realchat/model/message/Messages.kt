@@ -5,7 +5,7 @@ data class Messages(
      val message: String = "",
      val type: String = "",
      val to: String = "",
-     val messageID: String = "",
+     var messageID: String = "",
      val time: String = "",
      val date: String = "",
      val name: String = ""

@@ -76,10 +76,6 @@ public class Utils {
         return id > 0 ? activity.getResources().getDimensionPixelSize(id) : id;
     }
 
-
-    public static void showToast(String msg,Context context) {
-    }
-
     @SuppressLint("SimpleDateFormat")
     @RequiresApi(api = Build.VERSION_CODES.O)
     public static String UTCDatePicker(String dateStr) {

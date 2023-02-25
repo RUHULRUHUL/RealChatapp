@@ -28,7 +28,7 @@
                 android:src="@drawable/ic_other_user" />
 
             <TextView
-                android:id="@+id/custom_profile_name"
+                android:id="@+id/profileNameTxt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentLeft="true"
@@ -44,7 +44,7 @@
                 android:id="@+id/custom_user_last_seen"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/custom_profile_name"
+                android:layout_below="@id/profileNameTxt"
                 android:layout_alignParentLeft="true"
                 android:layout_marginStart="15dp"
                 android:text="last seen"
@@ -77,9 +77,9 @@
                 android:layout_height="50dp"
                 android:layout_alignParentLeft="true"
                 android:backgroundTint="@android:color/white"
-                android:src="@drawable/baseline_attach_file_24"></ImageButton>
+                android:src="@drawable/baseline_attach_file_24"/>
 
-            <EditText
+            <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_messages"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -87,7 +87,7 @@
                 android:layout_toRightOf="@id/send_files_btn"
                 android:background="@drawable/editext_bg"
                 android:hint="Type a message"
-                android:padding="15dp"></EditText>
+                android:padding="15dp"/>
 
             <ImageButton
                 android:id="@+id/send_message_btn"

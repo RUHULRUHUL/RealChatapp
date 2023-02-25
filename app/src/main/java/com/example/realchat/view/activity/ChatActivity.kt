@@ -6,18 +6,23 @@ import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
 import android.text.TextUtils
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.model.message.Messages
 import com.example.realchat.model.profile.ActiveStatus
+import com.example.realchat.model.profile.KeyBordType
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.MessageAdapter
+import com.example.realchat.viewModel.ChatViewModel
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
@@ -25,11 +30,13 @@ import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.CoroutineScope
 import java.text.SimpleDateFormat
 import java.util.*
 
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
+    private lateinit var chatViewModel: ChatViewModel
 
     private lateinit var messageRecieverId: String
     private var getMessageRecievername: String = ""
@@ -51,38 +58,79 @@ class ChatActivity : AppCompatActivity() {
     private var fileuri: Uri? = null
     private var loadingBar: ProgressDialog? = null
 
+    private lateinit var type: KeyBordType
+
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        initValue()
+        clickEvent()
+        getMessage()
+        Displaylastseen()
 
-        loadingBar = ProgressDialog(this)
-        mauth = FirebaseAuth.getInstance()
-        messageSenderId = mauth!!.currentUser!!.uid
-        RootRef = FirebaseDatabase.getInstance().reference
+    }
 
-        messageRecieverId = intent.extras!!["visit_user_id"].toString()
-        getMessageRecievername = intent.extras!!["visit_user_name"].toString()
-        messagereceiverimage = intent.extras!!["visit_image"].toString()
+    private fun getMessage() {
 
         messageAdapter = MessageAdapter(messagesList)
         linearLayoutManager = LinearLayoutManager(this)
         binding.privateMessageListOfUsers.layoutManager = linearLayoutManager
         binding.privateMessageListOfUsers.adapter = messageAdapter
 
-        val calendar = Calendar.getInstance()
+        RootRef.child("Messages")
+            .child(messageSenderId!!)
+            .child(messageRecieverId)
+            .addChildEventListener(object : ChildEventListener {
+                @SuppressLint("NotifyDataSetChanged")
+                override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
+                    val messages = dataSnapshot.getValue(Messages::class.java)
+                    if (messages != null) {
+                        messagesList.add(messages)
+                    }
+                    messageAdapter.notifyDataSetChanged()
+                    binding.privateMessageListOfUsers.smoothScrollToPosition(binding.privateMessageListOfUsers.adapter!!.itemCount)
+                }
 
+                override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
+                override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
+                override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
+                override fun onCancelled(databaseError: DatabaseError) {}
+            })
+    }
+
+    private fun initValue() {
+        val calendar = Calendar.getInstance()
         val currentDate = SimpleDateFormat("dd/MM/yyyy")
         savecurrentDate = currentDate.format(calendar.time)
-
         val currentTime = SimpleDateFormat("hh:mm a")
         savecurrentTime = currentTime.format(calendar.time)
 
-        binding.customProfileName.text = getMessageRecievername
-        Displaylastseen()
-        binding.sendMessageBtn.setOnClickListener(View.OnClickListener { SendMessage() })
+
+
+        chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
+        type = KeyBordType()
+
+        loadingBar = ProgressDialog(this)
+        mauth = FirebaseAuth.getInstance()
+        messageSenderId = mauth!!.currentUser!!.uid
+        RootRef = FirebaseDatabase.getInstance().reference
+
+
+        messageRecieverId = intent.getStringExtra("visit_user_id").toString()
+        getMessageRecievername = intent.getStringExtra("visit_user_name").toString()
+        messagereceiverimage = intent.getStringExtra("visit_image").toString()
+
+        binding.profileNameTxt.text = getMessageRecievername
+    }
+
+    private fun clickEvent() {
+
+        binding.sendMessageBtn.setOnClickListener {
+            sendMessage()
+        }
 
         binding.sendFilesBtn.setOnClickListener(View.OnClickListener {
             val options = arrayOf<CharSequence>(
@@ -114,25 +162,24 @@ class ChatActivity : AppCompatActivity() {
             builder.show()
         })
 
-        RootRef.child("Messages")
-            .child(messageSenderId!!)
-            .child(messageRecieverId)
-            .addChildEventListener(object : ChildEventListener {
-                @SuppressLint("NotifyDataSetChanged")
-                override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-                    val messages = dataSnapshot.getValue(Messages::class.java)
-                    if (messages != null) {
-                        messagesList.add(messages)
-                    }
-                    messageAdapter.notifyDataSetChanged()
-                    binding.privateMessageListOfUsers.smoothScrollToPosition(binding.privateMessageListOfUsers.adapter!!.itemCount)
-                }
+        binding.inputMessages.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 
-                override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
-                override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
-                override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
-                override fun onCancelled(databaseError: DatabaseError) {}
-            })
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                type.typing = true
+                chatViewModel.updateTypingStatus(type)
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                type.typing = false
+                chatViewModel.updateTypingStatus(type)
+            }
+
+
+        })
+
     }
 
     @Deprecated("Deprecated in Java")
@@ -151,7 +198,8 @@ class ChatActivity : AppCompatActivity() {
                     val messageSenderRef: String = "Messages/$messageSenderId/$messageRecieverId"
                     val messageReceiverRef =
                         "Messages/$messageRecieverId/$messageSenderId"
-                    val Usermessagekeyref = RootRef!!.child("Messages").child(messageSenderId!!).child(
+                    val Usermessagekeyref =
+                        RootRef!!.child("Messages").child(messageSenderId!!).child(
                             messageRecieverId!!
                         ).push()
                     val messagePushID = Usermessagekeyref.key
@@ -221,7 +269,7 @@ class ChatActivity : AppCompatActivity() {
                             messageTextBody["messageID"] = messagePushID
                             messageTextBody["time"] = savecurrentTime
                             messageTextBody["date"] = savecurrentDate
-                            val messageBodyDetails: MutableMap<String,Any> = HashMap()
+                            val messageBodyDetails: MutableMap<String, Any> = HashMap()
                             messageBodyDetails["$messageSenderRef/$messagePushID"] = messageTextBody
                             messageBodyDetails["$messageReceiverRef/$messagePushID"] =
                                 messageTextBody
@@ -251,24 +299,6 @@ class ChatActivity : AppCompatActivity() {
                                     }
                                     binding.inputMessages.setText("")
                                 }
-
-                        /*.addOnCompleteListener(object : OnCompleteListener<Any?> {
-                                    fun onComplete(task: Task<*>) {
-                                        if (task.isSuccessful) {
-                                            loadingBar!!.dismiss()
-                                            //Toast.makeText(ChatActivity.this,"Message sent Successfully...",Toast.LENGTH_SHORT).show();
-                                        } else {
-                                            loadingBar!!.dismiss()
-                                            Toast.makeText(
-                                                this@ChatActivity,
-                                                "Error:",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        binding.inputMessages!!.setText("")
-                                    }
-                                })*/
-
                         }
                     })
                 } else {
@@ -302,14 +332,15 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
-    private fun SendMessage() {
+    private fun sendMessage() {
         val messagetext = binding.inputMessages.text.toString()
         if (TextUtils.isEmpty(messagetext)) {
             Toast.makeText(this, "Please enter message first..", Toast.LENGTH_SHORT).show()
         } else {
             val messageSenderRef = "Messages/$messageSenderId/$messageRecieverId"
             val messageReceiverRef = "Messages/$messageRecieverId/$messageSenderId"
-            val userMessageKeyRef = RootRef.child("Messages").child(messageSenderId!!).child(messageRecieverId).push()
+            val userMessageKeyRef =
+                RootRef.child("Messages").child(messageSenderId!!).child(messageRecieverId).push()
             val messagePushID = userMessageKeyRef.key
             val messageTextBody = HashMap<String, Any?>()
             messageTextBody["message"] = messagetext

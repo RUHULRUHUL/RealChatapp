@@ -36,7 +36,6 @@ class SignInActivity : AppCompatActivity() {
     public override fun onStart() {
         super.onStart()
         if (auth.currentUser != null) {
-            Toast.makeText(this, "Already Authorized User", Toast.LENGTH_SHORT).show()
             gotoMainActivity()
 
         } else {

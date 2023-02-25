@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.R
 import com.example.realchat.databinding.UsersDisplayLayoutBinding
+import com.example.realchat.model.profile.Profile
 import com.example.realchat.model.profile.User
 import com.example.realchat.utils.DBReference.Companion.userRef
 import com.example.realchat.utils.Validator
@@ -22,9 +23,9 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 
 class ContactAdapter (
-    options: FirebaseRecyclerOptions<User>,
+    options: FirebaseRecyclerOptions<Profile>,
     val context: Context
-) : FirebaseRecyclerAdapter<User, ContactAdapter.ChatViewHolder>(options) {
+) : FirebaseRecyclerAdapter<Profile, ContactAdapter.ChatViewHolder>(options) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
         return ChatViewHolder(
@@ -36,38 +37,25 @@ class ContactAdapter (
         )
     }
 
-    override fun onBindViewHolder(holder: ChatViewHolder, position: Int, model: User) {
+    override fun onBindViewHolder(holder: ChatViewHolder, position: Int, model: Profile) {
         val userid = getRef(position).key
         val image = arrayOf("default_image")
-        if (userid != null) {
-            userRef.child(userid)
-                .addValueEventListener(object : ValueEventListener {
-                    override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            val name = dataSnapshot.child("name").value.toString()
-                            holder.binding.usersProfileName.text = name
-                            if (dataSnapshot.child("userState").hasChild("state")) {
-                                val state = dataSnapshot.child("UserState")
-                                    .child("state").value.toString()
-                                if (state == "online") {
-                                    holder.binding.stateImg.visibility = View.VISIBLE
-                                } else {
-                                    holder.binding.stateImg.visibility = View.GONE
-                                }
-                            }
 
-                            holder.itemView.setOnClickListener {
-                                val chatIntent = Intent(context, ChatActivity::class.java)
-                                chatIntent.putExtra("visit_user_id", userid)
-                                chatIntent.putExtra("visit_user_name", name)
-                                chatIntent.putExtra("visit_image", image[0])
-                                context.startActivity(chatIntent)
-                            }
-                        }
-                    }
+        holder.binding.usersProfileName.text = model.name
+/*
+        if (model.activeStatus.state == "online") {
+            holder.binding.stateImg.visibility = View.VISIBLE
+        } else {
+            holder.binding.stateImg.visibility = View.GONE
+        }
+*/
 
-                    override fun onCancelled(databaseError: DatabaseError) {}
-                })
+        holder.itemView.setOnClickListener {
+            val chatIntent = Intent(context, ChatActivity::class.java)
+            chatIntent.putExtra("visit_user_id", userid)
+            chatIntent.putExtra("visit_user_name", model.name)
+            chatIntent.putExtra("visit_image", image[0])
+            context.startActivity(chatIntent)
         }
     }
 
