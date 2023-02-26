@@ -7,9 +7,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
 import com.example.realchat.R
 import com.example.realchat.model.profile.ActiveStatus
-import com.example.realchat.model.profile.User
 import com.example.realchat.utils.DBReference
-import com.example.realchat.utils.DBReference.Companion.userStateRef
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -37,11 +35,9 @@ class MainActivity : AppCompatActivity() {
         NavigationUI.setupWithNavController(bottomNavigationView, navController)
     }
 
-
     override fun onStart() {
         super.onStart()
         userStatusUpdate("online")
-
     }
 
     override fun onPause() {
@@ -52,13 +48,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         userStatusUpdate("online")
-
     }
 
     override fun onRestart() {
         super.onRestart()
         userStatusUpdate("online")
-
     }
 
     override fun onStop() {

@@ -9,7 +9,7 @@ import android.widget.CompoundButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.R
-import com.example.realchat.helper.GroupMemberAddCallBack
+import com.example.realchat.helper.callBack.GroupMemberAddCallBack
 import com.example.realchat.model.profile.User
 import com.firebase.ui.database.FirebaseRecyclerAdapter
 import com.firebase.ui.database.FirebaseRecyclerOptions

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/gray_scale"
-    tools:context=".view.activity.GroupCreateActivity">
+    tools:context=".view.activity.GroupChatActivity">
 
     <RelativeLayout
         android:id="@+id/toolbarLayout"
@@ -95,7 +95,7 @@
             android:layout_toRightOf="@id/send_files_btn"
             android:background="@drawable/editext_bg"
             android:hint="Type a message"
-            android:padding="15dp"></EditText>
+            android:padding="15dp"/>
 
         <ImageButton
             android:id="@+id/send_message_btn"

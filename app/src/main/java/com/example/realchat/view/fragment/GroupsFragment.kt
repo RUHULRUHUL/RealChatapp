@@ -9,13 +9,14 @@ import android.view.ViewGroup
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.realchat.databinding.FragmentGroupsBinding
 import com.example.realchat.utils.DBReference
-import com.example.realchat.view.activity.GroupCreateActivity
-import com.google.android.gms.tasks.OnCompleteListener
+import com.example.realchat.utils.Validator
+import com.example.realchat.view.activity.GroupChatActivity
+import com.example.realchat.viewModel.GroupViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -23,6 +24,8 @@ import com.google.firebase.database.ValueEventListener
 
 class GroupsFragment : Fragment() {
     private lateinit var binding: FragmentGroupsBinding
+    private lateinit var groupViewModel: GroupViewModel
+
     private var arrayAdapter: ArrayAdapter<String>? = null
     private val groupList = ArrayList<String>()
     private lateinit var auth: FirebaseAuth
@@ -32,33 +35,28 @@ class GroupsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentGroupsBinding.inflate(layoutInflater)
-        binding.mainAppBar.title = "Groups List"
-
-        auth = FirebaseAuth.getInstance()
-
+        initFields()
         clickEvent()
-        IntializeFields()
         displayMyGroups()
         return binding.root
     }
 
     private fun clickEvent() {
-
-        binding.createGroup.setOnClickListener {
-            RequestNewGroup()
-        }
-
+        binding.createGroup.setOnClickListener { groupCreate() }
         binding.listView.onItemClickListener =
-            OnItemClickListener { adapterView, _, position, _ ->
+            OnItemClickListener { _, _, position, _ ->
                 val currentGroupName = groupList[position].toString().trim()
-                val intent = Intent(context, GroupCreateActivity::class.java)
-                intent.putExtra("groupName",currentGroupName)
+                val intent = Intent(context, GroupChatActivity::class.java)
+                intent.putExtra("groupName", currentGroupName)
                 startActivity(intent)
             }
-
     }
 
-    private fun IntializeFields() {
+    private fun initFields() {
+        binding.mainAppBar.title = "Groups List"
+        auth = FirebaseAuth.getInstance()
+        groupViewModel = ViewModelProvider(requireActivity())[GroupViewModel::class.java]
+
         arrayAdapter = ArrayAdapter<String>(
             requireContext(),
             android.R.layout.simple_list_item_1,
@@ -68,42 +66,26 @@ class GroupsFragment : Fragment() {
     }
 
     private fun displayMyGroups() {
-/*        DBReference.groupRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val set = ArrayList<String>()
-                val iterator = dataSnapshot.children.iterator()
-                while (iterator.hasNext()) {
-                    (iterator.next() as DataSnapshot).key?.let { set.add(it) }
-                }
-                groupList.clear()
-                groupList.addAll(set)
-                arrayAdapter?.notifyDataSetChanged()
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {}
-        })*/
-
         auth.currentUser?.let {
             DBReference.myGroupRef.child(it.uid)
                 .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val set = ArrayList<String>()
-                    val iterator = dataSnapshot.children.iterator()
-                    while (iterator.hasNext()) {
-                        (iterator.next() as DataSnapshot).key?.let { set.add(it) }
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val set = ArrayList<String>()
+                        val iterator = dataSnapshot.children.iterator()
+                        while (iterator.hasNext()) {
+                            (iterator.next() as DataSnapshot).key?.let { set.add(it) }
+                        }
+                        groupList.clear()
+                        groupList.addAll(set)
+                        arrayAdapter?.notifyDataSetChanged()
                     }
-                    groupList.clear()
-                    groupList.addAll(set)
-                    arrayAdapter?.notifyDataSetChanged()
-                }
 
-                override fun onCancelled(databaseError: DatabaseError) {}
-            })
+                    override fun onCancelled(databaseError: DatabaseError) {}
+                })
         }
-
     }
 
-    private fun RequestNewGroup() {
+    private fun groupCreate() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Group Create")
         val groupNameField = EditText(requireContext())
@@ -114,8 +96,7 @@ class GroupsFragment : Fragment() {
         ) { _, _ ->
             val groupName = groupNameField.text.toString().trim()
             if (TextUtils.isEmpty(groupName)) {
-                Toast.makeText(requireContext(), "Please write Group Name...", Toast.LENGTH_SHORT)
-                    .show()
+                Validator.showToast(requireContext(), "Please write Group Name...")
             } else {
                 createNewGroup(groupName)
             }
@@ -127,21 +108,12 @@ class GroupsFragment : Fragment() {
     }
 
     private fun createNewGroup(groupName: String) {
-        DBReference.groupRef.child(groupName).setValue("")
-            .addOnCompleteListener(OnCompleteListener<Void?> { task ->
-                if (task.isSuccessful) {
-                    auth.currentUser?.let {
-                        DBReference.myGroupRef.child(it.uid).child(groupName)
-                            .setValue("").addOnCompleteListener {
-                                if (it.isSuccessful) Toast.makeText(
-                                    requireContext(),
-                                    "group create success",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                    }
+        groupViewModel.groupCreate(groupName)
+            .observe(requireActivity()) {
+                if (it) {
+                    Validator.showToast(requireContext(), "group create success")
                 }
-            })
+            }
     }
 
 

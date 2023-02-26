@@ -121,34 +121,6 @@ public class Utils {
     }
 
     @SuppressLint("ResourceAsColor")
-    public static int dateToDay(String textView) {
-        Date dateOfBirthFormat = new Date();
-        Date currentDate = new Date();
-
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        try {
-            dateOfBirthFormat = simpleDateFormat.parse(textView);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        Date current = new Date();
-        Calendar cal1 = new GregorianCalendar();
-        Calendar cal2 = new GregorianCalendar();
-        cal1.setTime(dateOfBirthFormat);
-        cal2.setTime(current);
-
-        int diffYear = cal2.get(Calendar.YEAR) - cal1.get(Calendar.YEAR);
-
-        int diffMonth = diffYear * 12 + cal2.get(Calendar.MONTH) - cal1.get(Calendar.MONTH);
-        Log.d("DIFFERENCEOFMONTH", "" + diffMonth);
-
-        long diff = currentDate.getTime() - dateOfBirthFormat.getTime();
-        int totalDay = (int) (diff / (1000 * 60 * 60 * 24));
-        //int totalMonth = totalDay / 30;
-        return totalDay;
-    }
-
-    @SuppressLint("ResourceAsColor")
     public static int monthToDay(String textView) {
 
         return (Integer.parseInt(textView) * 30);
@@ -187,14 +159,6 @@ public class Utils {
 
     public static boolean locationPermissionCheck(Context context) {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public static String textInputEditTextToStringConvert(TextInputEditText textInputEditText) {
-        if (Objects.requireNonNull(textInputEditText.getText()).toString().trim().isEmpty()) {
-            return "null";
-        } else {
-            return textInputEditText.getText().toString().trim();
-        }
     }
 
     public static boolean isNetworkAvailable(Context context) {

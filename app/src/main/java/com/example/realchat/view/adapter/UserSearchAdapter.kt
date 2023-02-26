@@ -31,9 +31,9 @@ class UserSearchAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val profile = list[position]
 
-        Log.d("userName", "name " + profile.name.toString())
-        Log.d("userName", "status " + profile.status.toString())
-        Log.d("userName", "phone " + profile.phone.toString())
+        Log.d("userName", "name " + profile.name)
+        Log.d("userName", "status " + profile.status)
+        Log.d("userName", "phone " + profile.phone)
 
         holder.username.text = profile.name
         holder.itemView.setOnClickListener {

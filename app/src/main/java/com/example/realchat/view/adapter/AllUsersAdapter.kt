@@ -70,7 +70,6 @@ class AllUsersAdapter(
                 })
         }
 
-
         holder.itemView.setOnClickListener {
             val chatIntent = Intent(context, ProfileActivity::class.java)
             chatIntent.putExtra("visit_user_id", getRef(position).key)

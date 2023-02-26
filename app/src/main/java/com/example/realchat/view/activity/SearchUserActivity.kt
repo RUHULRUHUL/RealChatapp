@@ -1,5 +1,6 @@
 package com.example.realchat.view.activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -31,7 +32,6 @@ class SearchUserActivity : AppCompatActivity() {
     private lateinit var list: ArrayList<User>
     private lateinit var auth: FirebaseAuth
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySearchUserBinding.inflate(layoutInflater)
@@ -54,7 +54,6 @@ class SearchUserActivity : AppCompatActivity() {
     }
 
     private fun clickEvent() {
-
         binding.CloseImg.setOnClickListener {
             if (binding.searchView.text.isNotEmpty()) binding.searchView.setText("")
         }
@@ -86,10 +85,10 @@ class SearchUserActivity : AppCompatActivity() {
     }
 
     private fun searchUsers(s: String) {
-        //   Toast.makeText(this, "searchUsers", Toast.LENGTH_SHORT).show()
         list.clear()
         DBReference.userRef.orderByChild("name").equalTo(s)
             .addValueEventListener(object : ValueEventListener {
+                @SuppressLint("NotifyDataSetChanged")
                 override fun onDataChange(snapshot: DataSnapshot) {
                     Log.d("searchUsers", "searchUsers " + snapshot.value.toString())
                     val profile = snapshot.getValue(User::class.java)
@@ -150,25 +149,4 @@ class SearchUserActivity : AppCompatActivity() {
                 .setValue(activeStatus)
         }
     }
-
-
-/*    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater: MenuInflater = menuInflater
-        inflater.inflate(R.menu.search_menu_item, menu)
-        val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
-        searchView.imeOptions = EditorInfo.IME_ACTION_DONE
-
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                //query
-                return false
-            }
-        })
-        return true
-    }*/
 }

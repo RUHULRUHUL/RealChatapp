@@ -28,10 +28,7 @@ class FindFriendFragment : Fragment() {
     ): View {
         binding = FragmentFindFriendBinding.inflate(inflater)
         initValue()
-
-        binding.toolbar.title = "All Users"
         clickEvent()
-
         displayUsers()
         return binding.root
     }
@@ -61,6 +58,7 @@ class FindFriendFragment : Fragment() {
         userID = mAuth.uid.toString()
         userRef = FirebaseDatabase.getInstance().reference
         userRef = FirebaseDatabase.getInstance().reference.child("Users")
+        binding.toolbar.title = "All Users"
 
     }
 

@@ -6,11 +6,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.example.realchat.databinding.FragmentUserProfileBinding
 import com.example.realchat.model.profile.User
+import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.activity.FriendRequestActivity
 import com.example.realchat.view.authUi.SignInActivity
+import com.example.realchat.viewModel.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
@@ -24,6 +27,8 @@ class UserProfileFragment : Fragment() {
     private lateinit var binding: FragmentUserProfileBinding
     private lateinit var ref: DatabaseReference
     private lateinit var auth: FirebaseAuth
+
+    private lateinit var profileViewModel: ProfileViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -39,7 +44,7 @@ class UserProfileFragment : Fragment() {
 
     private fun getProfileData() {
         auth.currentUser?.let {
-            ref.child("Users").child(it.uid)
+            DBReference.userRef.child(it.uid)
                 .addValueEventListener(object : ValueEventListener {
                     override fun onDataChange(snapshot: DataSnapshot) {
 
@@ -57,15 +62,14 @@ class UserProfileFragment : Fragment() {
                     override fun onCancelled(error: DatabaseError) {
                         Validator.showToast(requireContext(), "onCancelled")
                     }
-
                 })
         }
-
     }
 
     private fun initValue() {
         auth = Firebase.auth
         ref = Firebase.database.reference
+        profileViewModel = ViewModelProvider(this)[ProfileViewModel::class.java]
     }
 
     private fun clickEvent() {
@@ -93,12 +97,15 @@ class UserProfileFragment : Fragment() {
                     Validator.getValeFromEdiText(binding.statusET),
                     Validator.getValeFromEdiText(binding.mobileET),
                 )
-                ref.child("Users").child(auth.uid.toString()).setValue(user)
-                    .addOnCompleteListener {
-                        if (it.isSuccessful) {
-                            Validator.showToast(requireContext(), "update successfully")
-                        }
+
+                profileViewModel.profileUpdate(user)
+                    .observe(requireActivity()) {
+                    if (it) {
+                        Validator.showToast(requireContext(), "update successfully")
+                    } else {
+                        Validator.showToast(requireContext(), "update try Again")
                     }
+                }
             }
         }
     }

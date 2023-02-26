@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.realchat.databinding.ActivityAddGroupUserBinding
-import com.example.realchat.helper.GroupMemberAddCallBack
+import com.example.realchat.helper.callBack.GroupMemberAddCallBack
 import com.example.realchat.model.profile.User
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Validator

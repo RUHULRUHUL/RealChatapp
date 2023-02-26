@@ -1,5 +1,6 @@
 package com.example.realchat.view.activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -15,9 +16,9 @@ class ProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProfileBinding
 
-    private var reciever_id: String? = null
-    private var sender_user_id: String? = null
-    private var current_state: String? = null
+    private var receiverId: String? = null
+    private var senderUserId: String? = null
+    private var currentState: String? = null
     private var mauth: FirebaseAuth? = null
     var ref: DatabaseReference? = null
     var chatrequestref: DatabaseReference? = null
@@ -36,23 +37,23 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun getContacts() {
-        ref!!.child("Users").child(reciever_id!!)
+        ref!!.child("Users").child(receiverId!!)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.exists() && dataSnapshot.hasChild("name")
                     ) {
                         val retrieveusername = dataSnapshot.child("name").value.toString()
                         val retrieveuserstatus = dataSnapshot.child("status").value.toString()
-                        val retrieveuserimage = dataSnapshot.child("image").value.toString()
+                        dataSnapshot.child("image").value.toString()
                         binding.visitUserName.text = retrieveusername
                         binding.visitStatus.text = retrieveuserstatus
-                        ManageChatRequest()
+                        manageChatRequest()
                     } else if (dataSnapshot.exists() && dataSnapshot.hasChild("name")) {
                         val retrieveusername = dataSnapshot.child("name").value.toString()
                         val retrieveuserstatus = dataSnapshot.child("status").value.toString()
                         binding.visitUserName.text = retrieveusername
                         binding.visitStatus.text = retrieveuserstatus
-                        ManageChatRequest()
+                        manageChatRequest()
                     }
                 }
 
@@ -63,12 +64,11 @@ class ProfileActivity : AppCompatActivity() {
 
     private fun initValue() {
         mauth = FirebaseAuth.getInstance()
-        sender_user_id = mauth!!.currentUser!!.uid
-        reciever_id = intent.extras!!["visit_user_id"].toString()
+        senderUserId = mauth!!.currentUser!!.uid
+        receiverId = intent.getStringExtra("visit_user_id").toString()
 
-
-        current_state = "new"
-        if (sender_user_id == reciever_id) binding.sendMessageRequestButton.visibility =
+        currentState = "new"
+        if (senderUserId == receiverId) binding.sendMessageRequestButton.visibility =
             View.INVISIBLE else binding.sendMessageRequestButton.visibility = View.VISIBLE
 
         ref = FirebaseDatabase.getInstance().reference
@@ -78,28 +78,29 @@ class ProfileActivity : AppCompatActivity() {
     }
 
 
-    private fun ManageChatRequest() {
-        chatrequestref!!.child(sender_user_id!!).addValueEventListener(object : ValueEventListener {
+    private fun manageChatRequest() {
+        chatrequestref!!.child(senderUserId!!).addValueEventListener(object : ValueEventListener {
+            @SuppressLint("SetTextI18n")
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.hasChild(reciever_id!!)) {
+                if (dataSnapshot.hasChild(receiverId!!)) {
                     val reuest_type =
-                        dataSnapshot.child(reciever_id!!).child("request_type").value.toString()
+                        dataSnapshot.child(receiverId!!).child("request_type").value.toString()
                     if (reuest_type == "sent") {
-                        current_state = "request_sent"
+                        currentState = "request_sent"
                         binding.sendMessageRequestButton.text = "  Cancel Chat Request  "
                     } else if (reuest_type == "received") {
-                        current_state = "request_received"
+                        currentState = "request_received"
                         binding.sendMessageRequestButton.text = "  Accept Chat Request  "
                         binding.declineMessageRequestButton.visibility = View.VISIBLE
                         binding.declineMessageRequestButton.isEnabled = true
                         binding.declineMessageRequestButton.setOnClickListener { CancelChatRequest() }
                     }
                 } else {
-                    contactsRef!!.child(sender_user_id!!)
+                    contactsRef!!.child(senderUserId!!)
                         .addListenerForSingleValueEvent(object : ValueEventListener {
                             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                if (dataSnapshot.hasChild(reciever_id!!)) {
-                                    current_state = "friends"
+                                if (dataSnapshot.hasChild(receiverId!!)) {
+                                    currentState = "friends"
                                     binding.sendMessageRequestButton.text = " Remove this contact "
                                 }
                             }
@@ -113,33 +114,34 @@ class ProfileActivity : AppCompatActivity() {
         })
         binding.sendMessageRequestButton.setOnClickListener {
             binding.sendMessageRequestButton.isEnabled = false
-            if (current_state == "new") {
-                SendChatRequest()
+            if (currentState == "new") {
+                sendChatRequest()
             }
-            if (current_state == "request_sent") {
+            if (currentState == "request_sent") {
                 CancelChatRequest()
             }
-            if (current_state == "request_received") {
-                AcceptChatRequest()
+            if (currentState == "request_received") {
+                acceptChatRequest()
             }
-            if (current_state == "friends") {
-                RemoveSpecificChatRequest()
+            if (currentState == "friends") {
+                removeSpecificChatRequest()
             }
         }
     }
 
-    private fun RemoveSpecificChatRequest() {
-        contactsRef!!.child(sender_user_id!!).child(reciever_id!!)
+    @SuppressLint("SetTextI18n")
+    private fun removeSpecificChatRequest() {
+        contactsRef!!.child(senderUserId!!).child(receiverId!!)
             .removeValue()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    contactsRef!!.child(reciever_id!!).child(sender_user_id!!)
+                    contactsRef!!.child(receiverId!!).child(receiverId!!)
                         .removeValue()
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 binding.sendMessageRequestButton.isEnabled = true
                                 binding.sendMessageRequestButton.text = "  Send Request  "
-                                current_state = "new"
+                                currentState = "new"
                                 binding.declineMessageRequestButton.visibility = View.INVISIBLE
                                 binding.declineMessageRequestButton.isEnabled = false
                             }
@@ -148,26 +150,27 @@ class ProfileActivity : AppCompatActivity() {
             }
     }
 
-    private fun AcceptChatRequest() {
-        contactsRef!!.child(sender_user_id!!).child(reciever_id!!)
+    @SuppressLint("SetTextI18n")
+    private fun acceptChatRequest() {
+        contactsRef!!.child(senderUserId!!).child(receiverId!!)
             .child("Contacts").setValue("Saved")
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    contactsRef!!.child(reciever_id!!).child(sender_user_id!!)
+                    contactsRef!!.child(receiverId!!).child(senderUserId!!)
                         .child("Contacts").setValue("Saved")
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                                chatrequestref!!.child(sender_user_id!!).child(reciever_id!!)
+                                chatrequestref!!.child(senderUserId!!).child(receiverId!!)
                                     .removeValue()
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
-                                            chatrequestref!!.child(reciever_id!!)
-                                                .child(sender_user_id!!)
+                                            chatrequestref!!.child(receiverId!!)
+                                                .child(senderUserId!!)
                                                 .removeValue()
                                                 .addOnCompleteListener {
                                                     binding.sendMessageRequestButton.isEnabled =
                                                         true
-                                                    current_state = "friends"
+                                                    currentState = "friends"
                                                     binding.sendMessageRequestButton.text =
                                                         " Remove this contact "
                                                     binding.declineMessageRequestButton.visibility =
@@ -183,18 +186,19 @@ class ProfileActivity : AppCompatActivity() {
             }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun CancelChatRequest() {
-        chatrequestref!!.child(sender_user_id!!).child(reciever_id!!)
+        chatrequestref!!.child(senderUserId!!).child(receiverId!!)
             .removeValue()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    chatrequestref!!.child(reciever_id!!).child(sender_user_id!!)
+                    chatrequestref!!.child(receiverId!!).child(senderUserId!!)
                         .removeValue()
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 binding.sendMessageRequestButton.isEnabled = true
                                 binding.sendMessageRequestButton.text = "  Send Request  "
-                                current_state = "new"
+                                currentState = "new"
                                 binding.declineMessageRequestButton.visibility = View.INVISIBLE
                                 binding.declineMessageRequestButton.isEnabled = false
                             }
@@ -203,24 +207,25 @@ class ProfileActivity : AppCompatActivity() {
             }
     }
 
-    private fun SendChatRequest() {
-        chatrequestref!!.child(sender_user_id!!).child(reciever_id!!).child("request_type")
+    @SuppressLint("SetTextI18n")
+    private fun sendChatRequest() {
+        chatrequestref!!.child(senderUserId!!).child(receiverId!!).child("request_type")
             .setValue("sent")
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    chatrequestref!!.child(reciever_id!!).child(sender_user_id!!)
+                    chatrequestref!!.child(receiverId!!).child(senderUserId!!)
                         .child("request_type").setValue("received")
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 val chatnotificationMap = HashMap<String, String>()
-                                chatnotificationMap["from"] = sender_user_id!!
+                                chatnotificationMap["from"] = senderUserId!!
                                 chatnotificationMap["type"] = "request"
-                                notificationRef!!.child(reciever_id!!).push()
+                                notificationRef!!.child(receiverId!!).push()
                                     .setValue(chatnotificationMap)
                                     .addOnCompleteListener { task ->
                                         if (task.isSuccessful) {
                                             binding.sendMessageRequestButton.isEnabled = true
-                                            current_state = "request_sent"
+                                            currentState = "request_sent"
                                             binding.sendMessageRequestButton.text =
                                                 "  Cancel Chat Request  "
                                         }

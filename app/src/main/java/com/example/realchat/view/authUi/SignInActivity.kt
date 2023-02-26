@@ -25,8 +25,6 @@ class SignInActivity : AppCompatActivity() {
         binding.signUpButton.setOnClickListener {
             signUp()
         }
-
-
         binding.logInButton.setOnClickListener {
             signIn()
         }

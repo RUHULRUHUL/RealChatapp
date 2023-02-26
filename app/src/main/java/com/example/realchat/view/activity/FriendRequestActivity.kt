@@ -1,5 +1,6 @@
 package com.example.realchat.view.activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -48,16 +49,14 @@ class FriendRequestActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-
         userStatusUpdate("online")
-
         val options: FirebaseRecyclerOptions<User> =
             FirebaseRecyclerOptions.Builder<User>()
                 .setQuery(chatrequestRef!!.child(currentUserId!!), User::class.java)
                 .build()
         val adapter: FirebaseRecyclerAdapter<User, RequestViewHolder> =
             object : FirebaseRecyclerAdapter<User, RequestViewHolder>(options) {
-                protected override fun onBindViewHolder(
+                override fun onBindViewHolder(
                     holder: RequestViewHolder,
                     position: Int,
                     model: User
@@ -68,27 +67,19 @@ class FriendRequestActivity : AppCompatActivity() {
                     val userId = getRef(position).key
                     val getTypeRef = getRef(position).child("request_type").ref
                     getTypeRef.addValueEventListener(object : ValueEventListener {
+                        @SuppressLint("SetTextI18n")
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
                             if (dataSnapshot.exists()) {
                                 val type = dataSnapshot.value.toString()
-                                if (type.equals("received")) {
+                                if (type == "received") {
                                     userref!!.child(userId!!)
                                         .addValueEventListener(object : ValueEventListener {
+                                            @SuppressLint("SetTextI18n")
                                             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                                                /*                           holder.imageView.visibility = View.INVISIBLE
-                                                                           if (dataSnapshot.hasChild("image")) {
-                                                                               val requestimage =
-                                                                                   dataSnapshot.child("image").value.toString()
-                                              *//*                                 Picasso.get().load(requestimage)
-                                                        .placeholder(R.drawable.profile_image)
-                                                        .into(holder.profilepicture)*//*
-                                                }*/
-                                                val requestusername =
+                                                val requestUsername =
                                                     dataSnapshot.child("name").value.toString()
-                                                val requeststatus =
-                                                    dataSnapshot.child("status").value.toString()
                                                 holder.binding.usersProfileName.text =
-                                                    requestusername
+                                                    requestUsername
                                                 holder.binding.usersStatus.text =
                                                     "Want to connect with you"
                                                 holder.itemView.setOnClickListener {
@@ -97,10 +88,10 @@ class FriendRequestActivity : AppCompatActivity() {
                                                     )
                                                     val builder =
                                                         AlertDialog.Builder(this@FriendRequestActivity)
-                                                    builder.setTitle("$requestusername Chat Request")
+                                                    builder.setTitle("$requestUsername Chat Request")
                                                     builder.setItems(
                                                         options
-                                                    ) { dialog, which ->
+                                                    ) { _, which ->
                                                         if (which == 0) {
                                                             contactref!!.child(currentUserId!!)
                                                                 .child(
@@ -179,30 +170,18 @@ class FriendRequestActivity : AppCompatActivity() {
                                             override fun onCancelled(databaseError: DatabaseError) {}
                                         })
                                 } else if (type == "sent") {
-                                    // val request_sent_btn = holder.itemView.findViewById<Button>(R.id.request_accept_button)
                                     holder.binding.requestAcceptButton.text = "Cancel Req"
-                                    //holder.itemView.findViewById<View>(R.id.request_cancel_button).visibility = View.INVISIBLE
-
                                     holder.binding.requestCancelButton.visibility = View.INVISIBLE
-
                                     userref!!.child(userId!!)
                                         .addValueEventListener(object : ValueEventListener {
                                             override fun onDataChange(dataSnapshot: DataSnapshot) {
-/*                                                if (dataSnapshot.hasChild("image")) {
-                                                    val requestimage =
-                                                        dataSnapshot.child("image").value.toString()
-                                                    *//*                              Picasso.get().load(requestimage)
-                                                                                      .placeholder(R.drawable.profile_image)
-                                                                                      .into(holder.profilepicture)*//*
-                                                }*/
-                                                val requestusername =
+                                                val requestUsername =
                                                     dataSnapshot.child("name").value.toString()
-                                                val requeststatus =
-                                                    dataSnapshot.child("status").value.toString()
+                                                dataSnapshot.child("status").value.toString()
                                                 holder.binding.usersProfileName.text =
-                                                    requestusername
+                                                    requestUsername
                                                 holder.binding.usersStatus.text =
-                                                    "You have sent a request to $requestusername"
+                                                    "You have sent a request to $requestUsername"
 
                                                 holder.itemView.setOnClickListener {
                                                     val options = arrayOf<CharSequence>(

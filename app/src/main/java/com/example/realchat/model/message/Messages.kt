@@ -8,7 +8,6 @@ data class Messages(
      var messageID: String = "",
      val time: String = "",
      val date: String = "",
-     val name: String = ""
 ) {
-    constructor() : this("", "", "", "", "", "", "", "")
+    constructor() : this("", "", "", "", "", "", "")
 }
