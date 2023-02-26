@@ -31,7 +31,7 @@ class GroupCreateAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, model: User) {
         holder.username.text = model.name
-        holder.checkBox.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
 
             if (isChecked) {
                 list.add(model)
@@ -41,7 +41,7 @@ class GroupCreateAdapter(
                 callBack.onSelectUserList(list)
             }
 
-        })
+        }
 
     }
 

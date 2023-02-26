@@ -44,6 +44,12 @@ class Validator {
             return date
         }
 
+        fun getSingleChatMsgPushKey(receiverId: String): String {
+            return DBReference.messageRef.child(DBReference.uid.toString()).child(
+                receiverId
+            ).push().key.toString()
+        }
+
         @SuppressLint("SimpleDateFormat")
         fun getCurrentDate(): String {
             val currentDate = SimpleDateFormat("dd/MM/yyyy")

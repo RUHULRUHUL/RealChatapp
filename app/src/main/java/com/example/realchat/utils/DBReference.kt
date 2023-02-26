@@ -3,6 +3,7 @@ package com.example.realchat.utils
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 
 class DBReference {
     companion object {
@@ -16,6 +17,9 @@ class DBReference {
         val myGroupRef = FirebaseDatabase.getInstance().reference.child("MyGroupRef")
         val messageRef = FirebaseDatabase.getInstance().reference.child("Messages")
 
+
+       val storageRef =  FirebaseStorage.getInstance().reference.child("Image Files")
+       val storageDocRef =  FirebaseStorage.getInstance().reference.child("Document Files")
 
     }
 

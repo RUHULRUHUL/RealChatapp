@@ -18,6 +18,7 @@ import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.model.message.Messages
 import com.example.realchat.model.profile.ActiveStatus
 import com.example.realchat.model.profile.KeyBordType
+import com.example.realchat.utils.Constant
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
@@ -36,20 +37,17 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var messageReceiverId: String
     private var getMessageReceiverName: String = ""
-    private var messagereceiverimage: String? = null
+    private var messageReceiverImage: String? = null
     private var messageSenderId: String? = null
 
     private lateinit var auth: FirebaseAuth
     private lateinit var rootRef: DatabaseReference
     private val messagesList = ArrayList<Messages>()
-    private var linearLayoutManager: LinearLayoutManager? = null
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
 
     private var fileType = ""
-    private var myUrl = ""
     private var fileuri: Uri? = null
-    private var loadingBar: ProgressDialog? = null
     private lateinit var type: KeyBordType
 
     @SuppressLint("SimpleDateFormat")
@@ -80,6 +78,7 @@ class ChatActivity : AppCompatActivity() {
                         }
                     }
                 }
+
                 override fun onCancelled(error: DatabaseError) {
                     TODO("Not yet implemented")
                 }
@@ -99,9 +98,8 @@ class ChatActivity : AppCompatActivity() {
 
     private fun getMessage() {
         messageAdapter = MessageAdapter(messagesList)
-        linearLayoutManager = LinearLayoutManager(this)
-        binding.privateMessageListOfUsers.layoutManager = linearLayoutManager
-        binding.privateMessageListOfUsers.adapter = messageAdapter
+        binding.messageRV.layoutManager = LinearLayoutManager(this)
+        binding.messageRV.adapter = messageAdapter
 
         DBReference.messageRef
             .child(messageSenderId!!)
@@ -114,9 +112,8 @@ class ChatActivity : AppCompatActivity() {
                         messagesList.add(messages)
                     }
                     messageAdapter.notifyDataSetChanged()
-                    binding.privateMessageListOfUsers.smoothScrollToPosition(binding.privateMessageListOfUsers.adapter!!.itemCount)
+                    binding.messageRV.smoothScrollToPosition(binding.messageRV.adapter!!.itemCount)
                 }
-
                 override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
                 override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
                 override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
@@ -128,14 +125,11 @@ class ChatActivity : AppCompatActivity() {
         type = KeyBordType()
         auth = FirebaseAuth.getInstance()
         rootRef = FirebaseDatabase.getInstance().reference
-        loadingBar = ProgressDialog(this)
         chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
-        loadingBar = ProgressDialog(this)
         messageSenderId = auth.currentUser?.uid
-
         messageReceiverId = intent.getStringExtra("visit_user_id").toString()
         getMessageReceiverName = intent.getStringExtra("visit_user_name").toString()
-        messagereceiverimage = intent.getStringExtra("visit_image").toString()
+        messageReceiverImage = intent.getStringExtra("visit_image").toString()
         binding.profileNameTxt.text = getMessageReceiverName
     }
 
@@ -189,17 +183,12 @@ class ChatActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (data != null) {
             if (data.data != null) {
-                loadingBar!!.setTitle("Sending File")
-                loadingBar!!.setMessage("please wait, we are sending that file...")
-                loadingBar!!.setCanceledOnTouchOutside(false)
-                loadingBar!!.show()
                 fileuri = data.data
                 if (fileType != "image") {
                     sendDocMessage()
                 } else if (fileType.equals("image", false)) {
                     sendImageSend()
                 } else {
-                    loadingBar!!.dismiss()
                     Toast.makeText(this, "please select file", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -207,19 +196,9 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun sendImageSend() {
-        val storageReference =
-            FirebaseStorage.getInstance().reference.child("Image Files")
-        val messageSenderRef = "Messages/$messageSenderId/$messageReceiverId"
-        val messageReceiverRef =
-            "Messages/$messageReceiverId/$messageSenderId"
-        val userMessageKey =
-            rootRef.child("Messages").child(messageSenderId!!).child(
-                messageReceiverId
-            ).push()
-        val messagePushID = userMessageKey.key
-        val filepath = storageReference.child("$messagePushID.jpg")
+        val messagePushID = Validator.getSingleChatMsgPushKey(messageReceiverId)
+        val filepath = DBReference.storageRef.child("$messagePushID.jpg")
         uploadTask = filepath.putFile(fileuri!!)
-
         uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
                 task.exception?.let {
@@ -229,94 +208,40 @@ class ChatActivity : AppCompatActivity() {
             filepath.downloadUrl
         }.addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                val downloadUrl = task.result
-                myUrl = downloadUrl.toString()
-                val messageTextBody = HashMap<Any?, Any?>()
-                messageTextBody["message"] = myUrl
-                messageTextBody["name"] = fileuri!!.lastPathSegment
-                messageTextBody["type"] = fileType
-                messageTextBody["from"] = messageSenderId
-                messageTextBody["to"] = messageReceiverId
-                messageTextBody["messageID"] = messagePushID
-                messageTextBody["time"] = Validator.getCurrentTime()
-                messageTextBody["date"] = Validator.getCurrentDate()
-                val messageBodyDetails: MutableMap<String, Any> = HashMap()
-                messageBodyDetails["$messageSenderRef/$messagePushID"] = messageTextBody
-                messageBodyDetails["$messageReceiverRef/$messagePushID"] =
-                    messageTextBody
-                rootRef.updateChildren(messageBodyDetails)
-                    .addOnCompleteListener {
-                        if (task.isSuccessful) {
-                            loadingBar!!.dismiss()
-                        } else {
-                            loadingBar!!.dismiss()
-                            Toast.makeText(
-                                this@ChatActivity,
-                                "Error:",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        binding.inputMessages.setText("")
-                    }.addOnCompleteListener {
-                        if (task.isSuccessful) {
-                            loadingBar!!.dismiss()
-                        } else {
-                            loadingBar!!.dismiss()
-                            Toast.makeText(
-                                this@ChatActivity,
-                                "Error:",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        binding.inputMessages.setText("")
-                    }
+                val messages = Messages(
+                    messageSenderId.toString(),
+                    task.result.toString(),
+                    Constant.MESSAGE_TYPE_IMAGE,
+                    messageReceiverId,
+                    "",
+                    Validator.getCurrentTime(),
+                    Validator.getCurrentDate(),
+                )
+                chatViewModel.sendMessage(messages, messageReceiverId)
+                binding.inputMessages.setText("")
             }
         }
     }
 
     private fun sendDocMessage() {
-        val storageReference =
-            FirebaseStorage.getInstance().reference.child("Document Files")
-        val messageSenderRef = "Messages/$messageSenderId/$messageReceiverId"
-        val messageReceiverRef =
-            "Messages/$messageReceiverId/$messageSenderId"
-        val userMessageKeyRef =
-            rootRef.child("Messages").child(messageSenderId!!).child(
-                messageReceiverId
-            ).push()
-        val messagePushID = userMessageKeyRef.key
-        val filepath = storageReference.child("$messagePushID.$fileType")
-        filepath.putFile(fileuri!!).addOnSuccessListener {
-            filepath.downloadUrl.addOnSuccessListener { uri ->
-                val downloadUrl = uri.toString()
-
-                val messageDocsBody = HashMap<Any?, Any?>()
-                messageDocsBody["message"] = downloadUrl
-                messageDocsBody["name"] = fileuri!!.lastPathSegment
-                messageDocsBody["type"] = fileType
-                messageDocsBody["from"] = messageSenderId
-                messageDocsBody["to"] = messageReceiverId
-                messageDocsBody["messageID"] = messagePushID
-                messageDocsBody["time"] = Validator.getCurrentTime()
-                messageDocsBody["date"] = Validator.getCurrentDate()
-
-
-                val messageBodyDDetail = HashMap<String, Any>()
-                messageBodyDDetail["$messageSenderRef/$messagePushID"] = messageDocsBody
-                messageBodyDDetail["$messageReceiverRef/$messagePushID"] =
-                    messageDocsBody
-
-                rootRef.updateChildren(messageBodyDDetail)
-                loadingBar!!.dismiss()
-
-            }.addOnFailureListener { e ->
-                loadingBar!!.dismiss()
-                Toast.makeText(this@ChatActivity, e.message, Toast.LENGTH_SHORT).show()
+        val messagePushID = Validator.getSingleChatMsgPushKey(messageReceiverId)
+        val filepath = DBReference.storageDocRef.child("$messagePushID.$fileType")
+        filepath.putFile(fileuri!!)
+            .addOnSuccessListener {
+                filepath.downloadUrl.addOnSuccessListener { uri ->
+                    val messages = Messages(
+                        messageSenderId.toString(),
+                        uri.toString(),
+                        fileType,
+                        messageReceiverId,
+                        "",
+                        Validator.getCurrentTime(),
+                        Validator.getCurrentDate(),
+                    )
+                    chatViewModel.sendMessage(messages, messageReceiverId)
+                    binding.inputMessages.setText("")
+                }
             }
-        }.addOnProgressListener { taskSnapshot ->
-            val p = 100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount
-            loadingBar!!.setMessage(p.toInt().toString() + " % Uploading...")
-        }
     }
 
     private fun displayLastSeen() {

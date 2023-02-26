@@ -54,7 +54,7 @@
         </RelativeLayout>
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/private_message_list_of_users"
+            android:id="@+id/messageRV"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@id/chat_linear_layout"

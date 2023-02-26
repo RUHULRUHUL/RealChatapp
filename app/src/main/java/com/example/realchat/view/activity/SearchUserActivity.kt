@@ -144,7 +144,7 @@ class SearchUserActivity : AppCompatActivity() {
                 Validator.getCurrentTime()
             )
             DBReference.userRef
-                .child(auth?.uid.toString())
+                .child(auth.uid.toString())
                 .child("UserState")
                 .setValue(activeStatus)
         }
