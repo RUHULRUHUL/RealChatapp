@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.FragmentChatsBinding
 import com.example.realchat.databinding.UsersDisplayLayoutBinding
 import com.example.realchat.model.profile.User
+import com.example.realchat.utils.DBReference
 import com.example.realchat.view.activity.ChatActivity
 import com.example.realchat.view.activity.SearchUserActivity
 import com.example.realchat.view.adapter.ContactAdapter
@@ -23,8 +24,6 @@ import com.google.firebase.database.*
 class ChatsFragment : Fragment() {
     private lateinit var binding: FragmentChatsBinding
     private lateinit var mAuth: FirebaseAuth
-    private lateinit var userID: String
-    private lateinit var userRef: DatabaseReference
     private lateinit var chatRef: DatabaseReference
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -36,23 +35,11 @@ class ChatsFragment : Fragment() {
         return binding.root
     }
 
-    private fun getContacts() {
-        val options: FirebaseRecyclerOptions<User> =
-            FirebaseRecyclerOptions.Builder<User>()
-                .setQuery(chatRef, User::class.java).build()
-
-        binding.onlineChatRV.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
-       val  adapter = ContactAdapter(options = options, requireContext())
-        binding.onlineChatRV.adapter = adapter
-    }
-
     private fun clickEvent() {
         binding.searchUsers.setOnClickListener {
             startActivity(Intent(requireContext(), SearchUserActivity::class.java))
         }
     }
-
 
     override fun onStart() {
         super.onStart()
@@ -68,7 +55,7 @@ class ChatsFragment : Fragment() {
                     val userid = getRef(position).key
                     val image = arrayOf("default_image")
                     if (userid != null) {
-                        userRef.child(userid)
+                        DBReference.userRef.child(userid)
                             .addValueEventListener(object : ValueEventListener {
                                 @SuppressLint("SetTextI18n")
                                 override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -126,12 +113,21 @@ class ChatsFragment : Fragment() {
 
     private fun initValue() {
         mAuth = FirebaseAuth.getInstance()
-        userID = mAuth.uid.toString()
         binding.toolbar.title = "My Contacts"
-        chatRef = FirebaseDatabase.getInstance().reference.child("Contacts").child(userID)
-        userRef = FirebaseDatabase.getInstance().reference.child("Users")
+        chatRef = FirebaseDatabase.getInstance().reference.child("Contacts").child(mAuth.uid.toString())
         binding.onlineChatRV.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+    }
+
+    private fun getContacts() {
+        val options: FirebaseRecyclerOptions<User> =
+            FirebaseRecyclerOptions.Builder<User>()
+                .setQuery(chatRef, User::class.java).build()
+
+        binding.onlineChatRV.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+        val  adapter = ContactAdapter(options = options, requireContext())
+        binding.onlineChatRV.adapter = adapter
     }
 
 }

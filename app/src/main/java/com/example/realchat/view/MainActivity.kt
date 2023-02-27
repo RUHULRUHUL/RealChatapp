@@ -22,7 +22,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         initNavController()
         initValue()
-        userStatusUpdate("online")
     }
 
     private fun initValue() {
