@@ -1,64 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <com.mikhaellopez.circularimageview.CircularImageView
-        android:id="@+id/message_profile_image"
-        android:layout_width="47dp"
-        android:layout_height="47dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:src="@drawable/ic_other_user" />
+    <data>
 
-    <TextView
-        android:id="@+id/receiver_message_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:layout_toRightOf="@id/message_profile_image"
-        android:background="@drawable/receiver_message_layout"
-        android:padding="10dp"
-        android:text="Receiver Messages here"
-        android:textSize="14dp"
-        android:textStyle="bold" />
+    </data>
 
-    <ImageView
-        android:id="@+id/message_sender_image_view"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_alignParentRight="true"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="5dp"
-        android:layout_marginBottom="5dp"
-        android:layout_toEndOf="@+id/message_receiver_image_view"
-        android:scaleType="centerCrop" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/message_receiver_image_view"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="50dp"
-        android:layout_marginTop="15dp"
-        android:scaleType="centerCrop" />
+        <com.mikhaellopez.circularimageview.CircularImageView
+            android:id="@+id/message_profile_image"
+            android:layout_width="47dp"
+            android:layout_height="47dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:src="@drawable/ic_other_user" />
 
-    <TextView
-        android:id="@+id/sender_message_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="@+id/receiver_message_text"
-        android:layout_alignParentRight="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginStart="20dp"
-        android:background="@drawable/sender_message_layout"
-        android:padding="5dp"
-        android:text="sender messages"
-        android:textSize="14dp"
-        android:textStyle="bold" />
-</RelativeLayout>
+        <TextView
+            android:id="@+id/receiver_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:layout_toRightOf="@id/message_profile_image"
+            android:background="@drawable/receiver_message_layout"
+            android:padding="10dp"
+            android:text="Receiver Messages here"
+            android:textSize="14dp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/message_sender_image_view"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_alignParentRight="true"
+            android:layout_marginStart="30dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_toEndOf="@+id/message_receiver_image_view"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/message_receiver_image_view"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="50dp"
+            android:layout_marginTop="15dp"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/sender_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="@+id/receiver_message_text"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginStart="20dp"
+            android:background="@drawable/sender_message_layout"
+            android:padding="5dp"
+            android:text="sender messages"
+            android:textSize="14dp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+</layout>

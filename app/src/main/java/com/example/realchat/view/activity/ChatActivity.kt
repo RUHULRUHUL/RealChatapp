@@ -4,7 +4,6 @@ package com.example.realchat.view.activity
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -23,10 +22,11 @@ import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.MessageAdapter
+import com.example.realchat.view.adapter.OneToOneMessageAdapter
 import com.example.realchat.viewModel.ChatViewModel
+import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
 import java.util.*
@@ -42,8 +42,10 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var rootRef: DatabaseReference
-    private val messagesList = ArrayList<Messages>()
-    private lateinit var messageAdapter: MessageAdapter
+
+    /*    private val messagesList = ArrayList<Messages>()
+        private lateinit var messageAdapter: MessageAdapter*/
+    private lateinit var adapter: OneToOneMessageAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
 
     private var fileType = ""
@@ -97,10 +99,25 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun getMessage() {
-        messageAdapter = MessageAdapter(messagesList)
-        binding.messageRV.layoutManager = LinearLayoutManager(this)
-        binding.messageRV.adapter = messageAdapter
+        val query = DBReference.messageRef
+            .child(messageSenderId!!)
+            .child(messageReceiverId)
+            .limitToLast(10)
 
+        val options = FirebaseRecyclerOptions.Builder<Messages>()
+            .setQuery(query, Messages::class.java)
+            .build()
+
+        adapter = OneToOneMessageAdapter(options)
+        binding.messageRV.layoutManager = LinearLayoutManager(this)
+        binding.messageRV.adapter = adapter
+
+
+/*        messageAdapter = MessageAdapter(messagesList)
+        binding.messageRV.layoutManager = LinearLayoutManager(this)
+        binding.messageRV.adapter = messageAdapter*/
+
+/*
         DBReference.messageRef
             .child(messageSenderId!!)
             .child(messageReceiverId)
@@ -114,11 +131,12 @@ class ChatActivity : AppCompatActivity() {
                     messageAdapter.notifyDataSetChanged()
                     binding.messageRV.smoothScrollToPosition(binding.messageRV.adapter!!.itemCount)
                 }
+
                 override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
                 override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
                 override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
                 override fun onCancelled(databaseError: DatabaseError) {}
-            })
+            })*/
     }
 
     private fun initValue() {
@@ -284,7 +302,14 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        adapter.startListening()
+
         userStatusUpdate("online")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        adapter.stopListening()
     }
 
     override fun onResume() {
