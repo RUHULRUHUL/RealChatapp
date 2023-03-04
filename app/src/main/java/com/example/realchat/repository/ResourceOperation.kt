@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import com.example.realchat.helper.room.MessageDB
 import com.example.realchat.model.message.GroupMessage
 import com.example.realchat.model.message.Messages
 import com.example.realchat.model.profile.ActiveStatus
@@ -14,10 +15,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
 class ResourceOperation {
+
+
     fun updateOnlineStatus(activeStatus: ActiveStatus, uid: String) {
         DBReference.userRef
             .child(uid)
@@ -119,7 +125,7 @@ class ResourceOperation {
         return groupCreateStatus
     }
 
-    fun sendTxtMessage(message: Messages, receiverId: String) {
+    fun sendTxtMessage(messageDB: MessageDB, message: Messages, receiverId: String) {
         val senderId = DBReference.uid.toString()
         val messageSenderRef = "Messages/$senderId/$receiverId"
         val messageReceiverRef = "Messages/$receiverId/$senderId"
@@ -130,6 +136,11 @@ class ResourceOperation {
         messageBodyDetails["$messageSenderRef/$messagePushID"] = message
         messageBodyDetails["$messageReceiverRef/$messagePushID"] = message
         DBReference.rootRef.updateChildren(messageBodyDetails)
+            .addOnCompleteListener {
+                CoroutineScope(Dispatchers.IO).launch {
+                    messageDB.messageDao()?.insertMessage(message)
+                }
+            }
     }
 
 }

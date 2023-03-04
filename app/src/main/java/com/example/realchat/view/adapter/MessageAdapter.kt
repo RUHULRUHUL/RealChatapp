@@ -20,11 +20,25 @@ import com.mikhaellopez.circularimageview.CircularImageView
 import com.squareup.picasso.Picasso
 
 class MessageAdapter(
-    private var UserMessageList: ArrayList<Messages>
+    private var userMessageList: ArrayList<Messages>
 ) : RecyclerView.Adapter<MessageAdapter.ViewHolder>() {
 
     private var userRef: DatabaseReference? = null
     private var mAuth: FirebaseAuth? = null
+
+    fun addNewMessageList(newMessages: ArrayList<Messages>) {
+        val size = userMessageList.size
+        userMessageList.addAll(newMessages)
+        notifyItemRangeChanged(size, newMessages.size)
+    }
+
+    fun getLastItemId():String {
+       return userMessageList[userMessageList.size - 1].messageID.toString()
+    }
+
+    fun removedLastItem() {
+        userMessageList.removeAt(userMessageList.size - 1)
+    }
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -38,10 +52,11 @@ class MessageAdapter(
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val messagesenderid = mAuth!!.currentUser!!.uid
-        val messages = UserMessageList[position]
+        val messages = userMessageList[position]
         val fromuserid = messages.from
         val frommessagetype = messages.type
-        userRef = fromuserid.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
+        userRef =
+            fromuserid.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
         userRef!!.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.hasChild("image")) {
@@ -60,12 +75,14 @@ class MessageAdapter(
             if (fromuserid == messagesenderid) {
                 holder.sendermessagetext.visibility = View.VISIBLE
                 holder.sendermessagetext.setBackgroundResource(R.drawable.sender_message_layout)
-                holder.sendermessagetext.text = (messages.message+ "\n \n" + messages.time) + " - " + messages.date
+                holder.sendermessagetext.text =
+                    (messages.message + "\n \n" + messages.time) + " - " + messages.date
             } else {
                 holder.receivermessagetext.visibility = View.VISIBLE
                 holder.receiverprofileimage.visibility = View.VISIBLE
                 holder.receivermessagetext.setBackgroundResource(R.drawable.receiver_message_layout)
-                holder.receivermessagetext.text = (messages.message + "\n \n" + messages.time) + " - " + messages.date
+                holder.receivermessagetext.text =
+                    (messages.message + "\n \n" + messages.time) + " - " + messages.date
             }
         } else if (frommessagetype == "image") {
             if (fromuserid == messagesenderid) {
@@ -88,7 +105,7 @@ class MessageAdapter(
         }
         if (fromuserid == messagesenderid) {
             holder.itemView.setOnClickListener {
-                if (UserMessageList[position].type == "pdf" || UserMessageList[position].type == "docx"
+                if (userMessageList[position].type == "pdf" || userMessageList[position].type == "docx"
                 ) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me",
@@ -106,7 +123,7 @@ class MessageAdapter(
                         } else if (which == 1) {
                             val intent = Intent(
                                 Intent.ACTION_VIEW, Uri.parse(
-                                    UserMessageList[position].message
+                                    userMessageList[position].message
                                 )
                             )
                             holder.itemView.context.startActivity(intent)
@@ -117,7 +134,7 @@ class MessageAdapter(
                         }
                     }
                     builder.show()
-                } else if (UserMessageList[position].type.equals("text")) {
+                } else if (userMessageList[position].type.equals("text")) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me", "Cancel", "Delete for everyone"
                     )
@@ -135,7 +152,7 @@ class MessageAdapter(
                         }
                     }
                     builder.show()
-                } else if (UserMessageList[position].type.equals("image")) {
+                } else if (userMessageList[position].type.equals("image")) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me", "View This Image", "Cancel", "Delete for everyone"
                     )
@@ -155,7 +172,7 @@ class MessageAdapter(
             }
         } else {
             holder.itemView.setOnClickListener {
-                if (UserMessageList[position].type == "pdf" || UserMessageList[position].type == "docx"
+                if (userMessageList[position].type == "pdf" || userMessageList[position].type == "docx"
                 ) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me", "Download and view content", "Cancel"
@@ -170,14 +187,14 @@ class MessageAdapter(
                         } else if (which == 1) {
                             val intent = Intent(
                                 Intent.ACTION_VIEW, Uri.parse(
-                                    UserMessageList[position].message
+                                    userMessageList[position].message
                                 )
                             )
                             holder.itemView.context.startActivity(intent)
                         }
                     }
                     builder.show()
-                } else if (UserMessageList[position].type.equals("text")) {
+                } else if (userMessageList[position].type.equals("text")) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me", "Cancel"
                     )
@@ -191,7 +208,7 @@ class MessageAdapter(
                         }
                     }
                     builder.show()
-                } else if (UserMessageList[position].type.equals("image")) {
+                } else if (userMessageList[position].type.equals("image")) {
                     val options = arrayOf<CharSequence>(
                         "Delete for me", "View This Image", "Cancel"
                     )
@@ -212,16 +229,16 @@ class MessageAdapter(
 
     private fun deleteSentMessage(position: Int, holder: ViewHolder) {
         val rootRef = FirebaseDatabase.getInstance().reference
-        UserMessageList[position].from.let {
-            UserMessageList[position].to.let { it1 ->
+        userMessageList[position].from.let {
+            userMessageList[position].to.let { it1 ->
                 rootRef.child("Messages").child(it)
                     .child(it1)
-                    .child(UserMessageList[position].messageID)
+                    .child(userMessageList[position].messageID)
                     .removeValue().addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             notifyItemRemoved(position)
-                            UserMessageList.removeAt(position)
-                            notifyItemRangeChanged(position, UserMessageList.size)
+                            userMessageList.removeAt(position)
+                            notifyItemRangeChanged(position, userMessageList.size)
                             Toast.makeText(
                                 holder.itemView.context,
                                 "Message deleted...",
@@ -229,7 +246,8 @@ class MessageAdapter(
                             )
                                 .show()
                         } else {
-                            Toast.makeText(holder.itemView.context, "Error...", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(holder.itemView.context, "Error...", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
             }
@@ -238,14 +256,14 @@ class MessageAdapter(
 
     private fun deleteReceiveMessage(position: Int, holder: ViewHolder) {
         val rootRef = FirebaseDatabase.getInstance().reference
-        rootRef.child("Messages").child(UserMessageList[position].to)
-            .child(UserMessageList[position].from)
-            .child(UserMessageList[position].messageID)
+        rootRef.child("Messages").child(userMessageList[position].to)
+            .child(userMessageList[position].from)
+            .child(userMessageList[position].messageID)
             .removeValue().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     notifyItemRemoved(position)
-                    UserMessageList.removeAt(position)
-                    notifyItemRangeChanged(position, UserMessageList.size)
+                    userMessageList.removeAt(position)
+                    notifyItemRangeChanged(position, userMessageList.size)
                     Toast.makeText(
                         holder.itemView.context,
                         "Message deleted...",
@@ -260,19 +278,19 @@ class MessageAdapter(
 
     private fun deleteMessageForEveryone(position: Int, holder: ViewHolder) {
         val rootRef = FirebaseDatabase.getInstance().reference
-        rootRef.child("Messages").child(UserMessageList[position].from)
-            .child(UserMessageList[position].to)
-            .child(UserMessageList[position].messageID)
+        rootRef.child("Messages").child(userMessageList[position].from)
+            .child(userMessageList[position].to)
+            .child(userMessageList[position].messageID)
             .removeValue().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    DBReference.rootRef.child("Messages").child(UserMessageList[position].to)
-                        .child(UserMessageList[position].from)
-                        .child(UserMessageList[position].messageID)
+                    DBReference.rootRef.child("Messages").child(userMessageList[position].to)
+                        .child(userMessageList[position].from)
+                        .child(userMessageList[position].messageID)
                         .removeValue().addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 notifyItemRemoved(position)
-                                UserMessageList.removeAt(position)
-                                notifyItemRangeChanged(position, UserMessageList.size)
+                                userMessageList.removeAt(position)
+                                notifyItemRangeChanged(position, userMessageList.size)
                                 Toast.makeText(
                                     holder.itemView.context,
                                     "Message deleted...",
@@ -294,7 +312,7 @@ class MessageAdapter(
     }
 
     override fun getItemCount(): Int {
-        return UserMessageList.size
+        return userMessageList.size
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -312,8 +330,6 @@ class MessageAdapter(
             messageReceiverPicture = itemView.findViewById(R.id.message_receiver_image_view)
         }
     }
-
-
 
 
 }
