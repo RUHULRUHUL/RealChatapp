@@ -17,8 +17,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.helper.room.MessageDB
 import com.example.realchat.model.message.Messages
@@ -28,6 +30,7 @@ import com.example.realchat.utils.Constant
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
+import com.example.realchat.view.adapter.AdChatAdapter
 import com.example.realchat.view.adapter.MessageAdapter
 import com.example.realchat.view.adapter.OneToOneMessageAdapter
 import com.example.realchat.viewModel.ChatViewModel
@@ -36,6 +39,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import kotlin.collections.ArrayList
@@ -55,21 +59,19 @@ class ChatActivity : AppCompatActivity() {
 
     private val messagesList = ArrayList<Messages>()
     private lateinit var messageAdapter: MessageAdapter
-    private lateinit var adapter: OneToOneMessageAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
 
     private var fileType = ""
     private var fileuri: Uri? = null
     private lateinit var type: KeyBordType
-
-    var totalITem = 0
     private lateinit var linearLayoutManager: LinearLayoutManager
-    private var itemLoadCount = 21
-    private var isLoading: Boolean = false
-    private var isMaxData: Boolean = false
-    private var lastNode = ""
+
+    private var mPrevKey = ""
+    private var mLastKey = ""
     private var lastKey = ""
-    private var targetKeyNode = ""
+    private var itemPosition = 0
+    private val totalItemLoad = 10
+    private var currentpage = 1
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,126 +80,47 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         initValue()
         clickEvent()
-        getTotalITem()
-        //queryMessageTest()
-        //getMessage()
-        //getMessageByFilter()
-        getFilterMessage()
+        loadMessage()
         getKeyBordTypeStatus()
         getOnlineStatus()
         displayLastSeen()
     }
 
-    private fun queryMessageTest() {
-        val query = DBReference.messageRef
-            .child(messageSenderId!!)
-            .child(messageReceiverId)
-            .orderByKey()
-            .endAt(targetKeyNode)
-            .limitToLast(10)
-
-        query.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists()) {
-                    binding.loader.visibility = View.GONE
-                    val newMessageList = kotlin.collections.ArrayList<Messages>()
-                    for (message in snapshot.children) {
-                        val messageItem = message.getValue(Messages::class.java)
-                        Log.d("MessageDBug", "" + messageItem?.message.toString())
-                        message.getValue(Messages::class.java)?.let { newMessageList.add(it) }
-                    }
-                    val targetKey = newMessageList[0].messageID
-                    Log.d("MessageDBug", "targetKey : " + targetKey)
-                    newMessageList.removeAt(newMessageList.size - 1)
-                    Log.d("MessageDBug", "" + newMessageList.toString())
-                    newMessageList.reverse()
-                    messageAdapter.addNewMessageList(newMessageList)
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
-        })
-    }
-
-    private fun getFilterMessage() {
+    private fun loadMessage() {
         messageAdapter = MessageAdapter(messagesList)
         binding.messageRV.layoutManager = linearLayoutManager
+        binding.messageRV.setHasFixedSize(true)
         binding.messageRV.adapter = messageAdapter
 
         val query = DBReference.messageRef
             .child(messageSenderId!!)
             .child(messageReceiverId)
             .orderByKey()
-            .limitToLast(10)
+            .limitToLast(currentpage * totalItemLoad)
 
         query.addChildEventListener(object : ChildEventListener {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 val messages = dataSnapshot.getValue(Messages::class.java)
-                if (messages != null) {
-                    messagesList.add(messages)
-                    Log.d("getMessageByFilter", "Message Item Size: " + messagesList.size)
+                for(data in messagesList){
+                    Log.d("chatMsg", "data = ${data.messageID}  ${data.message}")
                 }
-                lastKey = messageAdapter.getLastItemId()
-                targetKeyNode = messagesList[0].messageID
-                Log.d("getMessageByFilter", "MessageID Item key : $lastKey")
-                messageAdapter.notifyDataSetChanged()
-                binding.messageRV.smoothScrollToPosition(binding.messageRV.adapter!!.itemCount)
-            }
-
-            override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
-            override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
-            override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
-            override fun onCancelled(databaseError: DatabaseError) {}
-        })
-    }
-
-    private fun getTotalITem() {
-        runBlocking {
-            DBReference.messageRef
-                .child(messageSenderId!!)
-                .child(messageReceiverId)
-                .addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        totalITem = snapshot.childrenCount.toInt()
+                messages?.let {
+                    itemPosition++
+                    if (itemPosition == 1) {
+                        val messageKey = dataSnapshot.key
+                        lastKey = messageKey.toString()
+                        mPrevKey = messageKey.toString()
+                        Log.d("MyMessageKey","lastKey: "+dataSnapshot.key + "  perKey: "+dataSnapshot.key)
                     }
 
-                    override fun onCancelled(error: DatabaseError) {
-                        TODO("Not yet implemented")
-                    }
-
-                })
-        }
-
-    }
-
-    private fun getMessageByFilter() {
-
-/*        getFirstKey()
-        getMessageList()*/
-
-        val query = DBReference.messageRef
-            .child(messageSenderId!!)
-            .child(messageReceiverId)
-            .orderByKey()
-            .limitToLast(10)
-
-        query.addChildEventListener(object : ChildEventListener {
-            @SuppressLint("NotifyDataSetChanged")
-            override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-                val messages = dataSnapshot.getValue(Messages::class.java)
-                if (messages != null) {
                     messagesList.add(messages)
-                    Log.d("getMessageByFilter", "Message Item Size: " + messagesList.size)
+
+                    messageAdapter.notifyDataSetChanged()
+                    binding.messageRV.scrollToPosition(messagesList.size - 1)
+                    binding.swipeRefLay.isRefreshing = false
+
                 }
-
-                lastKey = messageAdapter.getLastItemId().toString()
-
-                messageAdapter.notifyDataSetChanged()
-                binding.messageRV.smoothScrollToPosition(binding.messageRV.adapter!!.itemCount)
             }
 
             override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
@@ -206,82 +129,47 @@ class ChatActivity : AppCompatActivity() {
             override fun onCancelled(databaseError: DatabaseError) {}
         })
 
-        messageAdapter = MessageAdapter(messagesList)
-        binding.messageRV.layoutManager = linearLayoutManager
-        binding.messageRV.adapter = messageAdapter
-
     }
 
-    private fun getMessageList() {
-        var query: Query
-        if (!isMaxData) {
-            if (TextUtils.isEmpty(lastNode)) {
-                query = DBReference.messageRef
-                    .child(messageSenderId!!)
-                    .child(messageReceiverId)
-                    .orderByKey()
-                    .limitToFirst(itemLoadCount)
-
-            } else {
-                query = DBReference.messageRef
-                    .child(messageSenderId!!)
-                    .child(messageReceiverId)
-                    .orderByKey()
-                    .startAt(lastNode)
-                    .limitToFirst(itemLoadCount)
-            }
-
-            query.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (snapshot.hasChildren()) {
-                        val newMessageList = ArrayList<Messages>()
-                        for (items in snapshot.children) {
-                            snapshot.getValue(Messages::class.java)?.let { newMessageList.add(it) }
-                        }
-                        lastNode = newMessageList[newMessageList.size - 1].messageID
-                        messageAdapter.addNewMessageList(newMessageList)
-                        if (lastNode != lastKey) {
-                            newMessageList.removeAt(newMessageList.size - 1)
-                        } else {
-                            lastNode = "end"
-                        }
-
-                        messageAdapter.addNewMessageList(newMessageList)
-                        isLoading = false
-                    } else {
-                        isLoading = false
-                        isMaxData = true
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
-
-            })
-        }
-
-    }
-
-    private fun getFirstKey() {
+    private fun loadMoreMessage() {
         val query = DBReference.messageRef
             .child(messageSenderId!!)
             .child(messageReceiverId)
-            .limitToLast(1)
+            .orderByKey()
+            .endAt(lastKey)
+            .limitToLast(10)
 
-        query.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for (items in snapshot.children) {
-                    lastKey = items.key.toString()
+        query.addChildEventListener(object : ChildEventListener {
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
+                val messages = dataSnapshot.getValue(Messages::class.java)
+
+                for(data in messagesList){
+                    Log.d("chatMsg", "data = ${data.messageID}  ${data.message}")
+                }
+
+                messages?.let {
+                    val messageKey = dataSnapshot.key
+                    if (mPrevKey != messageKey) messagesList.add(itemPosition++, messages)
+                    else mLastKey = mPrevKey
+
+                    if (itemPosition == 1){
+                        lastKey = messageKey.toString()
+                        Log.d("MyMessageKey","lastKey: "+dataSnapshot.key + "  perKey: "+dataSnapshot.key)
+                    }
+
+
+                    messageAdapter.notifyDataSetChanged()
+                    binding.swipeRefLay.isRefreshing = false
+                    linearLayoutManager.scrollToPositionWithOffset(10, 0)
                 }
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
+            override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
+            override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
+            override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
+            override fun onCancelled(databaseError: DatabaseError) {}
         })
-
     }
 
     private fun getKeyBordTypeStatus() {
@@ -316,47 +204,6 @@ class ChatActivity : AppCompatActivity() {
             }
     }
 
-    private fun getMessage() {
-        val query = DBReference.messageRef
-            .child(messageSenderId!!)
-            .child(messageReceiverId)
-            .limitToLast(10)
-
-        val options = FirebaseRecyclerOptions.Builder<Messages>()
-            .setQuery(query, Messages::class.java)
-            .build()
-
-        adapter = OneToOneMessageAdapter(options)
-        binding.messageRV.layoutManager = LinearLayoutManager(this)
-        binding.messageRV.adapter = adapter
-
-
-/*        messageAdapter = MessageAdapter(messagesList)
-        binding.messageRV.layoutManager = LinearLayoutManager(this)
-        binding.messageRV.adapter = messageAdapter*/
-
-/*
-        DBReference.messageRef
-            .child(messageSenderId!!)
-            .child(messageReceiverId)
-            .addChildEventListener(object : ChildEventListener {
-                @SuppressLint("NotifyDataSetChanged")
-                override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
-                    val messages = dataSnapshot.getValue(Messages::class.java)
-                    if (messages != null) {
-                        messagesList.add(messages)
-                    }
-                    messageAdapter.notifyDataSetChanged()
-                    binding.messageRV.smoothScrollToPosition(binding.messageRV.adapter!!.itemCount)
-                }
-
-                override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
-                override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
-                override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
-                override fun onCancelled(databaseError: DatabaseError) {}
-            })*/
-    }
-
     private fun initValue() {
         type = KeyBordType()
         auth = FirebaseAuth.getInstance()
@@ -374,14 +221,12 @@ class ChatActivity : AppCompatActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun clickEvent() {
-/*        binding.customProfileImage.setOnClickListener {
-            isMaxData = false
-            lastNode = messageAdapter.getLastItemId().toString()
-            messageAdapter.removedLastItem()
-            messageAdapter.notifyDataSetChanged()
-            getFirstKey()
-            getMessageList()
-        }*/
+
+        binding.swipeRefLay.setOnRefreshListener {
+            currentpage++
+            itemPosition = 0
+            loadMoreMessage()
+        }
 
         binding.sendMessageBtn.setOnClickListener { sendTextMessage() }
         binding.sendFilesBtn.setOnClickListener {
@@ -426,65 +271,8 @@ class ChatActivity : AppCompatActivity() {
             }
         })
 
-        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                super.onScrollStateChanged(recyclerView, newState)
-                if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    binding.loader.visibility = View.VISIBLE
-
-                    queryMessageTest()
-
-                }
-/*                totalItem = linearLayoutManager.itemCount
-                lastVisibleITem = linearLayoutManager.findLastVisibleItemPosition()
-                if (!isLoading && totalItem <= (lastVisibleITem + itemLoadCount)) {
-                    getMessageList()
-                    isLoading = true
-                }*/
-            }
-        })
-
-/*        binding.inputMessages.setOnTouchListener { _, event ->
-            if (MotionEvent.ACTION_DOWN == event.action) {
-                messagesList.clear()
-                messageAdapter.notifyDataSetChanged()
-                getMessageByFilter()
-            }
-            false
-        }*/
     }
 
-    private fun getFetchMessage() {
-
-        //messagesList.clear()
-        // litmitITemLast += 10
-        val query = DBReference.messageRef
-            .child(messageSenderId!!)
-            .child(messageReceiverId)
-            .endAt(lastKey)
-            .limitToLast(10)
-
-        query.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists()) {
-                    for (message in snapshot.children) {
-                        message.getValue(Messages::class.java)?.let { messagesList.add(it) }
-                    }
-
-                    messageAdapter.addNewMessageList(messagesList)
-
-/*                    messageAdapter = MessageAdapter(messagesList)
-                    binding.messageRV.layoutManager = LinearLayoutManager(this@ChatActivity)
-                    binding.messageRV.adapter = messageAdapter*/
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                TODO("Not yet implemented")
-            }
-
-        })
-    }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -592,14 +380,11 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        //adapter.startListening()
-
         userStatusUpdate("online")
     }
 
     override fun onStop() {
         super.onStop()
-        //adapter.stopListening()
     }
 
     override fun onResume() {

@@ -23,5 +23,7 @@ class ChatRepository {
         return onlineStatusLiveData
     }
 
+    fun getMessagesByChatUserId(messageDB:MessageDB) = messageDB.messageDao()?.getAllMessages()
+
 
 }

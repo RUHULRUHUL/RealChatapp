@@ -19,4 +19,6 @@ class ChatViewModel:ViewModel() {
         return chatRepository.getOnlineStatus(receiverId)
     }
 
+    fun getMessagesByChatUserId(messageDB:MessageDB) = chatRepository.getMessagesByChatUserId(messageDB)
+
 }

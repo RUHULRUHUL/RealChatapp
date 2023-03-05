@@ -26,21 +26,6 @@ class MessageAdapter(
     private var userRef: DatabaseReference? = null
     private var mAuth: FirebaseAuth? = null
 
-    fun addNewMessageList(newMessages: ArrayList<Messages>) {
-        val size = userMessageList.size
-        userMessageList.addAll(newMessages)
-        notifyItemRangeChanged(size, newMessages.size)
-    }
-
-    fun getLastItemId():String {
-       return userMessageList[userMessageList.size - 1].messageID.toString()
-    }
-
-    fun removedLastItem() {
-        userMessageList.removeAt(userMessageList.size - 1)
-    }
-
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.custom_messages_layout, parent, false)
@@ -55,17 +40,7 @@ class MessageAdapter(
         val messages = userMessageList[position]
         val fromuserid = messages.from
         val frommessagetype = messages.type
-        userRef =
-            fromuserid.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
-        userRef!!.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if (dataSnapshot.hasChild("image")) {
-                    dataSnapshot.child("image").value.toString()
-                }
-            }
 
-            override fun onCancelled(databaseError: DatabaseError) {}
-        })
         holder.receivermessagetext.visibility = View.GONE
         holder.receiverprofileimage.visibility = View.GONE
         holder.sendermessagetext.visibility = View.GONE

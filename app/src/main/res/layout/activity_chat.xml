@@ -53,22 +53,27 @@
 
         </RelativeLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/messageRV"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefLay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@id/chat_linear_layout"
-            android:layout_below="@+id/toolbarLayout"
-            android:layout_marginBottom="6dp" />
+            android:layout_below="@+id/toolbarLayout">
 
-        <ProgressBar
-            android:id="@+id/loader"
-            android:visibility="gone"
-            android:layout_below="@+id/toolbarLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/messageRV"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="6dp" />
 
+            <ProgressBar
+                android:id="@+id/loader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/toolbarLayout"
+                android:visibility="gone" />
 
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <RelativeLayout
             android:id="@+id/chat_linear_layout"
@@ -86,7 +91,7 @@
                 android:layout_height="50dp"
                 android:layout_alignParentLeft="true"
                 android:backgroundTint="@android:color/white"
-                android:src="@drawable/baseline_attach_file_24"/>
+                android:src="@drawable/baseline_attach_file_24" />
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_messages"
@@ -96,7 +101,7 @@
                 android:layout_toRightOf="@id/send_files_btn"
                 android:background="@drawable/editext_bg"
                 android:hint="Type a message"
-                android:padding="15dp"/>
+                android:padding="15dp" />
 
             <ImageButton
                 android:id="@+id/send_message_btn"
