@@ -93,19 +93,27 @@ class UserProfileFragment : Fragment() {
             ) {
                 val user = User(
                     Validator.getValeFromEdiText(binding.userNameET),
-                    auth.uid.toString(),
+                    Firebase.auth.currentUser?.uid.toString(),
                     Validator.getValeFromEdiText(binding.statusET),
                     Validator.getValeFromEdiText(binding.mobileET),
                 )
 
-                profileViewModel.profileUpdate(user)
+                Firebase.auth.currentUser?.uid?.let { it1 ->
+                    DBReference.userRef
+                        .child(it1)
+                        .setValue(user)
+                        .addOnCompleteListener {
+                            Validator.showToast(requireContext(), "update successfully")
+                        }
+                }
+/*                profileViewModel.profileUpdate(user)
                     .observe(requireActivity()) {
                     if (it) {
                         Validator.showToast(requireContext(), "update successfully")
                     } else {
                         Validator.showToast(requireContext(), "update try Again")
                     }
-                }
+                }*/
             }
         }
     }

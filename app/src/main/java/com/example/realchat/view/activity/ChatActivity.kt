@@ -6,21 +6,17 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
-import android.opengl.Visibility
 import android.os.Bundle
 import android.text.Editable
-import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.Log
 import android.view.MotionEvent
-import android.view.View
+import android.widget.AbsListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.helper.room.MessageDB
 import com.example.realchat.model.message.Messages
@@ -30,19 +26,13 @@ import com.example.realchat.utils.Constant
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
-import com.example.realchat.view.adapter.AdChatAdapter
 import com.example.realchat.view.adapter.MessageAdapter
-import com.example.realchat.view.adapter.OneToOneMessageAdapter
 import com.example.realchat.viewModel.ChatViewModel
-import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.*
-import kotlin.collections.ArrayList
 
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
@@ -57,7 +47,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var rootRef: DatabaseReference
 
-    private val messagesList = ArrayList<Messages>()
+
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
 
@@ -66,12 +56,23 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var type: KeyBordType
     private lateinit var linearLayoutManager: LinearLayoutManager
 
-    private var mPrevKey = ""
-    private var mLastKey = ""
+    private val messagesList = ArrayList<Messages>()
+    private var prevKey = ""
     private var lastKey = ""
     private var itemPosition = 0
-    private val totalItemLoad = 10
+    private var topMessageKey = ""
     private var currentpage = 1
+
+
+/*    var last_key = ""
+    var last_node: String? = ""
+    var isMaxData = false
+    var isScrolling: Boolean = false
+    var ITEM_LOAD_COUNT = 10
+
+    var currentitems = 0
+    var tottalitems: Int = 0
+    var scrolledoutitems: Int = 0*/
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,10 +81,33 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
         initValue()
         clickEvent()
+        getTopKey()
         loadMessage()
         getKeyBordTypeStatus()
         getOnlineStatus()
         displayLastSeen()
+    }
+
+    private fun getTopKey() {
+        val query = DBReference.messageRef
+            .child(messageSenderId!!)
+            .child(messageReceiverId)
+            .orderByKey()
+            .limitToFirst(1)
+
+        query.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                for (item in snapshot.children) {
+                    val message = item.getValue(Messages::class.java)
+                    topMessageKey = message?.messageID.toString()
+                    Log.d("TopKey", "Top key $topMessageKey")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+        })
     }
 
     private fun loadMessage() {
@@ -96,29 +120,23 @@ class ChatActivity : AppCompatActivity() {
             .child(messageSenderId!!)
             .child(messageReceiverId)
             .orderByKey()
-            .limitToLast(currentpage * totalItemLoad)
+            .limitToLast(10)
 
         query.addChildEventListener(object : ChildEventListener {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 val messages = dataSnapshot.getValue(Messages::class.java)
-                for(data in messagesList){
-                    Log.d("chatMsg", "data = ${data.messageID}  ${data.message}")
-                }
                 messages?.let {
                     itemPosition++
                     if (itemPosition == 1) {
                         val messageKey = dataSnapshot.key
                         lastKey = messageKey.toString()
-                        mPrevKey = messageKey.toString()
-                        Log.d("MyMessageKey","lastKey: "+dataSnapshot.key + "  perKey: "+dataSnapshot.key)
+                        prevKey = messageKey.toString()
                     }
-
                     messagesList.add(messages)
-
                     messageAdapter.notifyDataSetChanged()
                     binding.messageRV.scrollToPosition(messagesList.size - 1)
-                    binding.swipeRefLay.isRefreshing = false
+                    //binding.swipeRefLay.isRefreshing = false
 
                 }
             }
@@ -132,6 +150,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun loadMoreMessage() {
+        prevKey = lastKey
         val query = DBReference.messageRef
             .child(messageSenderId!!)
             .child(messageReceiverId)
@@ -143,25 +162,14 @@ class ChatActivity : AppCompatActivity() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 val messages = dataSnapshot.getValue(Messages::class.java)
-
-                for(data in messagesList){
-                    Log.d("chatMsg", "data = ${data.messageID}  ${data.message}")
-                }
-
                 messages?.let {
                     val messageKey = dataSnapshot.key
-                    if (mPrevKey != messageKey) messagesList.add(itemPosition++, messages)
-                    else mLastKey = mPrevKey
-
-                    if (itemPosition == 1){
-                        lastKey = messageKey.toString()
-                        Log.d("MyMessageKey","lastKey: "+dataSnapshot.key + "  perKey: "+dataSnapshot.key)
-                    }
-
+                    if (prevKey != messageKey) messagesList.add(itemPosition++, messages)
+                    if (itemPosition == 1) lastKey = dataSnapshot.key.toString()
 
                     messageAdapter.notifyDataSetChanged()
-                    binding.swipeRefLay.isRefreshing = false
-                    linearLayoutManager.scrollToPositionWithOffset(10, 0)
+                    // binding.swipeRefLay.isRefreshing = false
+                    linearLayoutManager.scrollToPositionWithOffset(8, 0)
                 }
             }
 
@@ -215,18 +223,39 @@ class ChatActivity : AppCompatActivity() {
         getMessageReceiverName = intent.getStringExtra("visit_user_name").toString()
         messageReceiverImage = intent.getStringExtra("visit_image").toString()
         binding.profileNameTxt.text = getMessageReceiverName
-
         linearLayoutManager = LinearLayoutManager(this)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun clickEvent() {
+/*        binding.swipeRefLay.setOnRefreshListener {
+            if (lastKey == topMessageKey) {
+                Validator.showToast(this, "No More Data")
+                binding.swipeRefLay.isRefreshing = false
+            } else {
+                currentpage++
+                itemPosition = 0
+                loadMoreMessage()
+            }
+        }*/
 
-        binding.swipeRefLay.setOnRefreshListener {
-            currentpage++
-            itemPosition = 0
-            loadMoreMessage()
-        }
+        binding.messageRV.addOnScrollListener(
+            object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    if (dy < 0) {
+                        if (lastKey == topMessageKey) {
+                            Validator.showToast(this@ChatActivity, "No More Data")
+                        } else {
+                            currentpage++
+                            itemPosition = 0
+                            loadMoreMessage()
+                        }
+                    }
+                }
+            }
+        )
+
 
         binding.sendMessageBtn.setOnClickListener { sendTextMessage() }
         binding.sendFilesBtn.setOnClickListener {
@@ -270,6 +299,15 @@ class ChatActivity : AppCompatActivity() {
                 chatViewModel.updateTypingStatus(type)
             }
         })
+
+        binding.inputMessages.setOnTouchListener { _, event ->
+            if (MotionEvent.ACTION_DOWN == event.action) {
+                if (messagesList.size > 0) {
+                    binding.messageRV.smoothScrollToPosition(messagesList.size - 1)
+                }
+            }
+            false
+        }
 
     }
 

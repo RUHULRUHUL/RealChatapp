@@ -53,27 +53,31 @@
 
         </RelativeLayout>
 
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefLay"
+        <!--
+                <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                    android:id="@+id/swipeRefLay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_above="@id/chat_linear_layout"
+                    android:layout_below="@+id/toolbarLayout">
+        -->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/messageRV"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@id/chat_linear_layout"
-            android:layout_below="@+id/toolbarLayout">
+            android:layout_below="@+id/toolbarLayout"
+            android:layout_marginBottom="6dp" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/messageRV"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginBottom="6dp" />
+        <ProgressBar
+            android:id="@+id/loader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/toolbarLayout"
+            android:visibility="gone" />
 
-            <ProgressBar
-                android:id="@+id/loader"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/toolbarLayout"
-                android:visibility="gone" />
-
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        <!-- </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>-->
 
         <RelativeLayout
             android:id="@+id/chat_linear_layout"

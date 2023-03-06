@@ -22,8 +22,6 @@ import com.squareup.picasso.Picasso
 class MessageAdapter(
     private var userMessageList: ArrayList<Messages>
 ) : RecyclerView.Adapter<MessageAdapter.ViewHolder>() {
-
-    private var userRef: DatabaseReference? = null
     private var mAuth: FirebaseAuth? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
