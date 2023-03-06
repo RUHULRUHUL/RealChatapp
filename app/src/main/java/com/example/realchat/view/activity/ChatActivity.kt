@@ -11,7 +11,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.MotionEvent
-import android.widget.AbsListView
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -38,41 +38,24 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var messageDB: MessageDB
-
     private lateinit var messageReceiverId: String
     private var getMessageReceiverName: String = ""
     private var messageReceiverImage: String? = null
     private var messageSenderId: String? = null
-
     private lateinit var auth: FirebaseAuth
     private lateinit var rootRef: DatabaseReference
-
-
     private lateinit var messageAdapter: MessageAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
-
     private var fileType = ""
     private var fileuri: Uri? = null
     private lateinit var type: KeyBordType
     private lateinit var linearLayoutManager: LinearLayoutManager
-
     private val messagesList = ArrayList<Messages>()
     private var prevKey = ""
     private var lastKey = ""
     private var itemPosition = 0
     private var topMessageKey = ""
     private var currentpage = 1
-
-
-/*    var last_key = ""
-    var last_node: String? = ""
-    var isMaxData = false
-    var isScrolling: Boolean = false
-    var ITEM_LOAD_COUNT = 10
-
-    var currentitems = 0
-    var tottalitems: Int = 0
-    var scrolledoutitems: Int = 0*/
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,11 +94,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun loadMessage() {
-        messageAdapter = MessageAdapter(messagesList)
-        binding.messageRV.layoutManager = linearLayoutManager
-        binding.messageRV.setHasFixedSize(true)
-        binding.messageRV.adapter = messageAdapter
-
+        binding.loader.visibility = View.VISIBLE
         val query = DBReference.messageRef
             .child(messageSenderId!!)
             .child(messageReceiverId)
@@ -125,6 +104,7 @@ class ChatActivity : AppCompatActivity() {
         query.addChildEventListener(object : ChildEventListener {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
+                binding.loader.visibility = View.GONE
                 val messages = dataSnapshot.getValue(Messages::class.java)
                 messages?.let {
                     itemPosition++
@@ -136,8 +116,6 @@ class ChatActivity : AppCompatActivity() {
                     messagesList.add(messages)
                     messageAdapter.notifyDataSetChanged()
                     binding.messageRV.scrollToPosition(messagesList.size - 1)
-                    //binding.swipeRefLay.isRefreshing = false
-
                 }
             }
 
@@ -163,12 +141,12 @@ class ChatActivity : AppCompatActivity() {
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 val messages = dataSnapshot.getValue(Messages::class.java)
                 messages?.let {
+                    binding.loader.visibility = View.GONE
                     val messageKey = dataSnapshot.key
                     if (prevKey != messageKey) messagesList.add(itemPosition++, messages)
                     if (itemPosition == 1) lastKey = dataSnapshot.key.toString()
 
                     messageAdapter.notifyDataSetChanged()
-                    // binding.swipeRefLay.isRefreshing = false
                     linearLayoutManager.scrollToPositionWithOffset(8, 0)
                 }
             }
@@ -224,39 +202,30 @@ class ChatActivity : AppCompatActivity() {
         messageReceiverImage = intent.getStringExtra("visit_image").toString()
         binding.profileNameTxt.text = getMessageReceiverName
         linearLayoutManager = LinearLayoutManager(this)
+
+        messageAdapter = MessageAdapter(messagesList)
+        binding.messageRV.layoutManager = linearLayoutManager
+        binding.messageRV.setHasFixedSize(true)
+        binding.messageRV.adapter = messageAdapter
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun clickEvent() {
-/*        binding.swipeRefLay.setOnRefreshListener {
-            if (lastKey == topMessageKey) {
-                Validator.showToast(this, "No More Data")
-                binding.swipeRefLay.isRefreshing = false
-            } else {
-                currentpage++
-                itemPosition = 0
-                loadMoreMessage()
-            }
-        }*/
-
-        binding.messageRV.addOnScrollListener(
-            object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    super.onScrolled(recyclerView, dx, dy)
-                    if (dy < 0) {
-                        if (lastKey == topMessageKey) {
-                            Validator.showToast(this@ChatActivity, "No More Data")
-                        } else {
-                            currentpage++
-                            itemPosition = 0
-                            loadMoreMessage()
-                        }
+        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (lastKey == topMessageKey) {
+                        Validator.showToast(this@ChatActivity, "No More Data")
+                    } else {
+                        binding.loader.visibility = View.VISIBLE
+                        currentpage++
+                        itemPosition = 0
+                        loadMoreMessage()
                     }
                 }
             }
-        )
-
-
+        })
         binding.sendMessageBtn.setOnClickListener { sendTextMessage() }
         binding.sendFilesBtn.setOnClickListener {
             val options = arrayOf<CharSequence>(
@@ -288,8 +257,20 @@ class ChatActivity : AppCompatActivity() {
             builder.show()
         }
         binding.inputMessages.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {
+            }
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                start: Int,
+                before: Int,
+                count: Int
+            ) {
                 type.typing = true
                 chatViewModel.updateTypingStatus(type)
             }
@@ -384,9 +365,12 @@ class ChatActivity : AppCompatActivity() {
                 @SuppressLint("SetTextI18n")
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.child("UserState").hasChild("state")) {
-                        val state = dataSnapshot.child("UserState").child("state").value.toString()
-                        val date = dataSnapshot.child("UserState").child("date").value.toString()
-                        val time = dataSnapshot.child("UserState").child("time").value.toString()
+                        val state =
+                            dataSnapshot.child("UserState").child("state").value.toString()
+                        val date =
+                            dataSnapshot.child("UserState").child("date").value.toString()
+                        val time =
+                            dataSnapshot.child("UserState").child("time").value.toString()
                         if (state == "online") {
                             binding.onlineOfflineTxt.text = "online"
                         } else if (state == "offline") {
