@@ -8,12 +8,12 @@ import com.example.realchat.model.message.Messages
 
 @Database(
     entities = [Messages::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class MessageDB : RoomDatabase() {
 
-    abstract fun messageDao(): MessageDao?
+    abstract fun messageDao(): MessageDao
 
     companion object {
         @Volatile

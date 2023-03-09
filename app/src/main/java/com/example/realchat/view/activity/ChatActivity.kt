@@ -15,6 +15,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.ActivityChatBinding
@@ -32,7 +33,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
@@ -51,11 +54,13 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var type: KeyBordType
     private lateinit var linearLayoutManager: LinearLayoutManager
     private val messagesList = ArrayList<Messages>()
+    private val allMessageList = ArrayList<Messages>()
+    private var chatMsgFromRoom = ArrayList<Messages>()
+    private lateinit var job: Job
     private var prevKey = ""
     private var lastKey = ""
     private var itemPosition = 0
     private var topMessageKey = ""
-    private var currentpage = 1
 
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,11 +70,15 @@ class ChatActivity : AppCompatActivity() {
         initValue()
         clickEvent()
         getTopKey()
-        loadMessage()
+        getAllMessageFetch()
+        getMessageFromRoomDB()
+        //loadMessage()
+        loadMessage1()
         getKeyBordTypeStatus()
         getOnlineStatus()
         displayLastSeen()
     }
+
 
     private fun getTopKey() {
         val query = DBReference.messageRef
@@ -92,6 +101,61 @@ class ChatActivity : AppCompatActivity() {
             }
         })
     }
+
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun getAllMessageFetch() {
+        job = GlobalScope.launch {
+            val query = DBReference.messageRef
+                .child(messageSenderId!!)
+                .child(messageReceiverId)
+                .orderByChild("date")
+                .equalTo("09/03/2023")
+
+            query.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    allMessageList.clear()
+                    if (snapshot.exists()) {
+
+                        Validator.showToast(this@ChatActivity,"getAllMessageFetch")
+
+                        for (item in snapshot.children) {
+                            val message = item.getValue(Messages::class.java)
+                            Log.d(
+                                "getAllMessageFetch",
+                                "message: ${message?.message} date: ${message?.date}"
+                            )
+                            message?.let { allMessageList.add(it) }
+                        }
+                        allMessageList.reverse()
+                        lifecycleScope.launch {
+                            messageDB.messageDao().insertAllMessage(allMessageList)
+                        }
+
+                        for (item in allMessageList) {
+                            Log.d(
+                                "getAllMessageFetch",
+                                "reverse List: ${item.message} date: ${item.date}"
+                            )
+                        }
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    TODO("Not yet implemented")
+                }
+
+            })
+        }
+    }
+
+    private fun getMessageFromRoomDB() {
+        lifecycleScope.launch {
+            chatMsgFromRoom.clear()
+            chatMsgFromRoom = messageDB.messageDao().getAllChatMsgList() as ArrayList<Messages>
+        }
+    }
+
 
     private fun loadMessage() {
         binding.loader.visibility = View.VISIBLE
@@ -158,6 +222,57 @@ class ChatActivity : AppCompatActivity() {
         })
     }
 
+    private fun loadMessage1() {
+        binding.loader.visibility = View.VISIBLE
+        val query = DBReference.messageRef
+            .child(messageSenderId!!)
+            .child(messageReceiverId)
+            .orderByChild("date")
+            .equalTo("06/03/2023")
+            .limitToLast(10)
+
+        query.addChildEventListener(object : ChildEventListener {
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
+                binding.loader.visibility = View.GONE
+                val messages = dataSnapshot.getValue(Messages::class.java)
+                messages?.let {
+                    messagesList.add(messages)
+                    Log.d(
+                        "FilterData",
+                        "item -:  ${messages.message} -: ${messages.date} "
+                    )
+                    messageAdapter.notifyDataSetChanged()
+                    binding.messageRV.scrollToPosition(messagesList.size - 1)
+                }
+            }
+
+            override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
+            override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
+            override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
+            override fun onCancelled(databaseError: DatabaseError) {}
+        })
+
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun loadMoreMessage1() {
+        binding.loader.visibility = View.VISIBLE
+        val starSize = messagesList.size
+        val limitSize = messagesList.size + 10
+        for (i in starSize..limitSize) {
+            messagesList.add(0, allMessageList[i])
+            Log.d(
+                "FilterData",
+                "item -:  ${allMessageList[i].message} -: ${allMessageList[i].date} "
+            )
+        }
+        messageAdapter.notifyDataSetChanged()
+        linearLayoutManager.scrollToPositionWithOffset(5, 0)
+        binding.loader.visibility = View.GONE
+    }
+
+
     private fun getKeyBordTypeStatus() {
         DBReference.userRef
             .child(messageReceiverId)
@@ -215,6 +330,19 @@ class ChatActivity : AppCompatActivity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (messagesList.size != allMessageList.size) {
+                        loadMoreMessage1()
+                    } else {
+                        Validator.showToast(this@ChatActivity, "No More Data")
+                    }
+                }
+            }
+        })
+
+/*        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
                     if (lastKey == topMessageKey) {
                         Validator.showToast(this@ChatActivity, "No More Data")
                     } else {
@@ -225,7 +353,8 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
             }
-        })
+        })*/
+
         binding.sendMessageBtn.setOnClickListener { sendTextMessage() }
         binding.sendFilesBtn.setOnClickListener {
             val options = arrayOf<CharSequence>(
@@ -284,7 +413,7 @@ class ChatActivity : AppCompatActivity() {
         binding.inputMessages.setOnTouchListener { _, event ->
             if (MotionEvent.ACTION_DOWN == event.action) {
                 if (messagesList.size > 0) {
-                    binding.messageRV.smoothScrollToPosition(messagesList.size - 1)
+                    binding.messageRV.scrollToPosition(messagesList.size - 1)
                 }
             }
             false

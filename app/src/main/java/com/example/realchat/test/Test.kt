@@ -15,16 +15,17 @@ fun main() {
     itemList.add("8")
     itemList.add("9")
     itemList.add("10")
+    itemList.reverse()
     for (item in itemList) {
         println("previous item - $item")
     }
 
-    for (i in 0 until 10) {
+/*    for (i in 0 until 10) {
         itemList.add(i, "hi")
     }
 
     for (item in itemList) {
         println("item - $item")
-    }
+    }*/
 
 }
