@@ -110,14 +110,14 @@ class ChatActivity : AppCompatActivity() {
                 .child(messageSenderId!!)
                 .child(messageReceiverId)
                 .orderByChild("date")
-                .equalTo("09/03/2023")
+                .equalTo("11/03/2023")
 
-            query.addValueEventListener(object : ValueEventListener {
+            query.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     allMessageList.clear()
                     if (snapshot.exists()) {
 
-                        Validator.showToast(this@ChatActivity,"getAllMessageFetch")
+                        Validator.showToast(this@ChatActivity, "getAllMessageFetch")
 
                         for (item in snapshot.children) {
                             val message = item.getValue(Messages::class.java)
@@ -128,8 +128,15 @@ class ChatActivity : AppCompatActivity() {
                             message?.let { allMessageList.add(it) }
                         }
                         allMessageList.reverse()
-                        lifecycleScope.launch {
-                            messageDB.messageDao().insertAllMessage(allMessageList)
+                        Log.d("MessageDBug", "getAllMessageFetch list size:-${allMessageList.size}  thread Name  " + Thread.currentThread().name)
+
+                        CoroutineScope(Dispatchers.IO).launch {
+                           // Log.d("MessageDBug", "getAllMessageFetch- thread Name " + Thread.currentThread().name)
+                            messageDB.messageDao().deleteAllMessages()
+                            if (messageDB.messageDao().getMessageList().isEmpty() && allMessageList.isNotEmpty()) {
+                                Log.d("MessageDBug", "getAllMessageFetch insert list - thread Name " + Thread.currentThread().name)
+                                messageDB.messageDao().insertAllMessage(allMessageList)
+                            }
                         }
 
                         for (item in allMessageList) {
@@ -228,7 +235,7 @@ class ChatActivity : AppCompatActivity() {
             .child(messageSenderId!!)
             .child(messageReceiverId)
             .orderByChild("date")
-            .equalTo("06/03/2023")
+            .equalTo("11/03/2023")
             .limitToLast(10)
 
         query.addChildEventListener(object : ChildEventListener {
@@ -238,11 +245,12 @@ class ChatActivity : AppCompatActivity() {
                 val messages = dataSnapshot.getValue(Messages::class.java)
                 messages?.let {
                     messagesList.add(messages)
+                    Log.d("MessageDBug", "onChildAdded- thread Name " + Thread.currentThread().name)
                     Log.d(
                         "FilterData",
                         "item -:  ${messages.message} -: ${messages.date} "
                     )
-                    messageAdapter.notifyDataSetChanged()
+                   // messageAdapter.notifyDataSetChanged()
                     binding.messageRV.scrollToPosition(messagesList.size - 1)
                 }
             }
@@ -252,7 +260,6 @@ class ChatActivity : AppCompatActivity() {
             override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
             override fun onCancelled(databaseError: DatabaseError) {}
         })
-
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -261,14 +268,20 @@ class ChatActivity : AppCompatActivity() {
         val starSize = messagesList.size
         val limitSize = messagesList.size + 10
         for (i in starSize..limitSize) {
-            messagesList.add(0, allMessageList[i])
-            Log.d(
-                "FilterData",
-                "item -:  ${allMessageList[i].message} -: ${allMessageList[i].date} "
-            )
+            if (i == chatMsgFromRoom.size) {
+                Validator.showToast(this, "No More Data Found")
+                break
+            } else {
+                messagesList.add(0, chatMsgFromRoom[i])
+                Log.d(
+                    "FilterData",
+                    "item -:  ${chatMsgFromRoom[i].message} -: ${chatMsgFromRoom[i].date} "
+                )
+            }
+
         }
         messageAdapter.notifyDataSetChanged()
-        linearLayoutManager.scrollToPositionWithOffset(5, 0)
+        linearLayoutManager.scrollToPositionWithOffset(8, 15)
         binding.loader.visibility = View.GONE
     }
 
@@ -330,7 +343,8 @@ class ChatActivity : AppCompatActivity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (messagesList.size != allMessageList.size) {
+                    if (chatMsgFromRoom.size > 0 && messagesList.size != chatMsgFromRoom.size) {
+
                         loadMoreMessage1()
                     } else {
                         Validator.showToast(this@ChatActivity, "No More Data")
@@ -355,7 +369,16 @@ class ChatActivity : AppCompatActivity() {
             }
         })*/
 
-        binding.sendMessageBtn.setOnClickListener { sendTextMessage() }
+        binding.sendMessageBtn.setOnClickListener {
+            CoroutineScope(Dispatchers.IO).launch {
+                Log.d("MessageDBug", "insert- thread Name " + Thread.currentThread().name)
+                for (i in 1700..5000) {
+                    delay(500)
+                    sendTextMessage(i)
+                }
+            }
+            // sendTextMessage()
+        }
         binding.sendFilesBtn.setOnClickListener {
             val options = arrayOf<CharSequence>(
                 "Images", "PDF Files", "Ms Word Files"
@@ -515,10 +538,10 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
-    private fun sendTextMessage() {
+    private fun sendTextMessage(i: Int) {
         val messages = Messages(
             messageSenderId.toString(),
-            binding.inputMessages.text.toString(),
+            i.toString(),
             "text",
             messageReceiverId,
             "",
@@ -526,7 +549,7 @@ class ChatActivity : AppCompatActivity() {
             Validator.getCurrentDate(),
         )
         chatViewModel.sendMessage(messageDB, messages, messageReceiverId)
-        binding.inputMessages.setText("")
+      //  binding.inputMessages.setText("")
     }
 
     override fun onStart() {

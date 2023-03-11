@@ -27,4 +27,7 @@ interface MessageDao {
 
     @Query("SELECT * FROM Messages")
     fun getAllChatMsgList(): List<Messages>
+
+    @Query("DELETE  FROM Messages")
+    fun  deleteAllMessages()
 }

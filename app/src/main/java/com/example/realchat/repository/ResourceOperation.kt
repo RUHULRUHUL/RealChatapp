@@ -136,11 +136,6 @@ class ResourceOperation {
         messageBodyDetails["$messageSenderRef/$messagePushID"] = message
         messageBodyDetails["$messageReceiverRef/$messagePushID"] = message
         DBReference.rootRef.updateChildren(messageBodyDetails)
-/*            .addOnCompleteListener {
-                CoroutineScope(Dispatchers.IO).launch {
-                    messageDB.messageDao()?.insertMessage(message)
-                }
-            }*/
     }
 
 }
