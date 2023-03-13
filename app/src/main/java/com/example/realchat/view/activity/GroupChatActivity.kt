@@ -36,8 +36,9 @@ class GroupChatActivity : AppCompatActivity() {
     private var lastKey = ""
     private var itemPosition = 0
     private var topMessageKey = ""
-    private var isLoading: Boolean = true
-    private var isFirstTimeLoad = true
+    private var isLoading: Boolean = false
+    private var isFirstTimeLoad = false
+    private var loadMorePageStatus = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +73,8 @@ class GroupChatActivity : AppCompatActivity() {
     }
 
     private fun loadMessage() {
+        itemPosition = 0
+        isLoading = true
         binding.loader.visibility = View.VISIBLE
         val query = DBReference.groupRef
             .child(intent.getStringExtra("groupName").toString())
@@ -84,20 +87,28 @@ class GroupChatActivity : AppCompatActivity() {
                 binding.loader.visibility = View.GONE
                 isLoading = false
                 if (dataSnapshot.exists()) {
-                    val messages = dataSnapshot.getValue(GroupMessage::class.java)
-                    messages?.let {
-                        itemPosition++
-                        if (itemPosition == 1) {
-                            lastKey = dataSnapshot.key.toString()
-                            prevKey = dataSnapshot.key.toString()
+                    val message = dataSnapshot.getValue(GroupMessage::class.java)
+                    message?.let {
+                        if (!loadMorePageStatus) {
+                            Validator.showToast(this@GroupChatActivity,"last KEy")
+                            itemPosition++
+                            if (itemPosition == 1) {
+                                lastKey = dataSnapshot.key.toString()
+                                prevKey = dataSnapshot.key.toString()
+                            }
+                            messagesList.add(message)
+                            adapter.notifyDataSetChanged()
+                            binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
+                        } else {
+                            Validator.showToast(this@GroupChatActivity,"prev last KEy")
+                            messagesList.add(message)
+                            adapter.notifyDataSetChanged()
+                            binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
                         }
-                        messagesList.add(messages)
-                        messagesList.distinct()
-                        adapter.notifyDataSetChanged()
-                        binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
                     }
                 }
             }
+
             override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
             override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
             override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
@@ -118,8 +129,10 @@ class GroupChatActivity : AppCompatActivity() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 binding.loader.visibility = View.GONE
-                isLoading = false
                 if (dataSnapshot.exists()) {
+                    loadMorePageStatus = true
+                    isLoading = false
+
                     val messages = dataSnapshot.getValue(GroupMessage::class.java)
                     messages?.let {
                         if (prevKey != dataSnapshot.key) {
@@ -149,15 +162,16 @@ class GroupChatActivity : AppCompatActivity() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (lastKey == topMessageKey) {
-                        Log.d(
-                            "topLastMessageKey",
-                            "rich to top no more data lastKEy $lastKey topKey: $topMessageKey are the same"
-                        )
-                        Validator.showToast(this@GroupChatActivity, "No More Data")
-                    } else {
-                        if (!isLoading) {
+                    if (!isLoading) {
+                        if (lastKey == topMessageKey) {
+                            Log.d(
+                                "topLastMessageKey",
+                                "rich to top no more data lastKEy $lastKey topKey: $topMessageKey are the same"
+                            )
+                            Validator.showToast(this@GroupChatActivity, "No More Data")
+                        } else {
                             binding.loader.visibility = View.VISIBLE
+                            isLoading = true
                             object : CountDownTimer(2000, 1000) {
                                 override fun onTick(millisUntilFinished: Long) {
                                 }
@@ -166,10 +180,9 @@ class GroupChatActivity : AppCompatActivity() {
                                     loadMoreMessage()
                                 }
                             }.start()
-
-                        } else {
-                            Validator.showToast(this@GroupChatActivity, "Please wait loading..")
                         }
+                    } else {
+                        Validator.showToast(this@GroupChatActivity, "Please wait for loading...")
                     }
                 }
             }
