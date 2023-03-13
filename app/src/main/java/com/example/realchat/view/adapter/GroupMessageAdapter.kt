@@ -1,4 +1,5 @@
 package com.example.realchat.view.adapter
+
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +13,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.mikhaellopez.circularimageview.CircularImageView
 
 class GroupMessageAdapter(
-    private var UserMessageList: ArrayList<GroupMessage>
+    private var messageList: ArrayList<GroupMessage>
 ) : RecyclerView.Adapter<GroupMessageAdapter.ViewHolder>() {
     private var mAuth: FirebaseAuth? = null
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -26,7 +27,7 @@ class GroupMessageAdapter(
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val messagesenderid = mAuth!!.currentUser!!.uid
-        val messages = UserMessageList[position]
+        val messages = messageList[position]
         val frommessagetype = messages.type
 
         holder.receivermessagetext.visibility = View.GONE
@@ -39,12 +40,14 @@ class GroupMessageAdapter(
             if (messages.uid == messagesenderid) {
                 holder.sendermessagetext.visibility = View.VISIBLE
                 holder.sendermessagetext.setBackgroundResource(R.drawable.sender_message_layout)
-                holder.sendermessagetext.text = (messages.message + "\n \n" + messages.time) + " - " + messages.date
+                holder.sendermessagetext.text =
+                    (messages.message + "\n \n" + messages.time) + " - " + messages.date
             } else {
                 holder.receivermessagetext.visibility = View.VISIBLE
                 holder.receiverprofileimage.visibility = View.VISIBLE
                 holder.receivermessagetext.setBackgroundResource(R.drawable.receiver_message_layout)
-                holder.receivermessagetext.text = (messages.message + "\n \n" + messages.time) + " - " + messages.date
+                holder.receivermessagetext.text =
+                    (messages.message + "\n \n" + messages.time) + " - " + messages.date
             }
         } else if (frommessagetype == "image") {
             if (messages.uid == messagesenderid) {
@@ -64,8 +67,15 @@ class GroupMessageAdapter(
         }
     }
 
+    fun addChatList(list: List<GroupMessage>) {
+        for (i in 0..list.size) {
+            messageList.add(i, list[i])
+        }
+        notifyDataSetChanged()
+    }
+
     override fun getItemCount(): Int {
-        return UserMessageList.size
+        return messageList.size
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

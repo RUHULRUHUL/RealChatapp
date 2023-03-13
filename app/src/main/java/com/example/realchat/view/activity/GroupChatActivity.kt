@@ -3,25 +3,24 @@ package com.example.realchat.view.activity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.text.TextUtils
+import android.os.CountDownTimer
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.ActivityGroupCreateBinding
 import com.example.realchat.model.message.GroupMessage
-import com.example.realchat.model.message.Messages
 import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.GroupMessageAdapter
 import com.example.realchat.viewModel.GroupViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
-import java.text.SimpleDateFormat
 import java.util.*
+
 
 class GroupChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGroupCreateBinding
@@ -29,16 +28,16 @@ class GroupChatActivity : AppCompatActivity() {
     private lateinit var mAuth: FirebaseAuth
     private lateinit var adapter: GroupMessageAdapter
     private val messagesList = ArrayList<GroupMessage>()
-
     private lateinit var linearLayoutManager: LinearLayoutManager
 
     private var currentUserName = ""
     private var groupName = ""
-
     private var prevKey = ""
     private var lastKey = ""
     private var itemPosition = 0
     private var topMessageKey = ""
+    private var isLoading: Boolean = true
+    private var isFirstTimeLoad = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +82,7 @@ class GroupChatActivity : AppCompatActivity() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 binding.loader.visibility = View.GONE
+                isLoading = false
                 if (dataSnapshot.exists()) {
                     val messages = dataSnapshot.getValue(GroupMessage::class.java)
                     messages?.let {
@@ -92,23 +92,20 @@ class GroupChatActivity : AppCompatActivity() {
                             prevKey = dataSnapshot.key.toString()
                         }
                         messagesList.add(messages)
+                        messagesList.distinct()
                         adapter.notifyDataSetChanged()
                         binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
                     }
                 }
-
             }
-
             override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
             override fun onChildRemoved(dataSnapshot: DataSnapshot) {}
             override fun onChildMoved(dataSnapshot: DataSnapshot, s: String?) {}
             override fun onCancelled(databaseError: DatabaseError) {}
         })
-
     }
 
     private fun loadMoreMessage() {
-        binding.loader.visibility = View.VISIBLE
         itemPosition = 0
         prevKey = lastKey
         val query = DBReference.groupRef
@@ -121,17 +118,22 @@ class GroupChatActivity : AppCompatActivity() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 binding.loader.visibility = View.GONE
+                isLoading = false
                 if (dataSnapshot.exists()) {
                     val messages = dataSnapshot.getValue(GroupMessage::class.java)
                     messages?.let {
-                        if (prevKey != dataSnapshot.key) messagesList.add(itemPosition++, messages)
-                        if (itemPosition == 1) lastKey = dataSnapshot.key.toString()
+                        if (prevKey != dataSnapshot.key) {
+                            messagesList.add(itemPosition++, messages)
+                            Log.d("GroupChatMSG", "loadMoreMessage: " + messages.message)
+                        }
+                        if (itemPosition == 1) {
+                            lastKey = dataSnapshot.key.toString()
+                        }
 
                         adapter.notifyDataSetChanged()
                         linearLayoutManager.scrollToPositionWithOffset(8, 0)
                     }
                 }
-
             }
 
             override fun onChildChanged(dataSnapshot: DataSnapshot, s: String?) {}
@@ -154,11 +156,34 @@ class GroupChatActivity : AppCompatActivity() {
                         )
                         Validator.showToast(this@GroupChatActivity, "No More Data")
                     } else {
-                        loadMoreMessage()
+                        if (!isLoading) {
+                            binding.loader.visibility = View.VISIBLE
+                            object : CountDownTimer(2000, 1000) {
+                                override fun onTick(millisUntilFinished: Long) {
+                                }
+
+                                override fun onFinish() {
+                                    loadMoreMessage()
+                                }
+                            }.start()
+
+                        } else {
+                            Validator.showToast(this@GroupChatActivity, "Please wait loading..")
+                        }
                     }
                 }
             }
         })
+
+        binding.inputMessages.setOnTouchListener { _, event ->
+            if (MotionEvent.ACTION_DOWN == event.action) {
+                if (messagesList.size > 0) {
+                    binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
+                }
+            }
+            false
+        }
+
         binding.sendMessageBtn.setOnClickListener {
             mAuth.currentUser?.let {
                 sendGroupTxtMessage()
