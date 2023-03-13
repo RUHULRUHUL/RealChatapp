@@ -16,11 +16,13 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
 import com.example.realchat.R;
 import com.google.android.material.textfield.TextInputEditText;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -106,6 +108,22 @@ public class Utils {
             return ISOFormat.format(combinedDate);
         }
     }
+
+    @SuppressLint("ResourceAsColor")
+    public static String getDateTime(int totalDay) {
+        final Calendar c = Calendar.getInstance();
+        int year = c.get(Calendar.YEAR);
+        int month = c.get(Calendar.MONTH);
+        int day = c.get(Calendar.DAY_OF_MONTH);
+
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat format = new SimpleDateFormat("dd MMMM yyyy");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.add(Calendar.DAY_OF_MONTH, -totalDay);
+        Date d = calendar.getTime();
+        return format.format(d);
+    }
+
 
     private static Date combine(Date date, Date time) {
         Calendar cal = Calendar.getInstance();

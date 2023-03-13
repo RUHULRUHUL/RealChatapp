@@ -16,6 +16,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
+import androidx.paging.PagingConfig
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.ActivityChatBinding
@@ -28,12 +30,15 @@ import com.example.realchat.utils.DBReference
 import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.MessageAdapter
+import com.example.realchat.view.adapter.MessagePagingAdapter
 import com.example.realchat.viewModel.ChatViewModel
+import com.firebase.ui.database.paging.DatabasePagingOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collectLatest
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -48,6 +53,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var rootRef: DatabaseReference
     private lateinit var messageAdapter: MessageAdapter
+    private lateinit var adapter: MessagePagingAdapter
     private lateinit var uploadTask: StorageTask<UploadTask.TaskSnapshot>
     private var fileType = ""
     private var fileuri: Uri? = null
@@ -70,13 +76,69 @@ class ChatActivity : AppCompatActivity() {
         initValue()
         clickEvent()
         getTopKey()
-        getAllMessageFetch()
-        getMessageFromRoomDB()
+        //paginationData()
+        // getAllMessageFetch()
+        //getMessageFromRoomDB()
         //loadMessage()
         loadMessage1()
         getKeyBordTypeStatus()
         getOnlineStatus()
         displayLastSeen()
+    }
+
+    private fun paginationData() {
+        val config = PagingConfig(
+            20,
+            10,
+            false
+        )
+
+        val query = DBReference.messageRef
+            .child(messageSenderId!!)
+            .child(messageReceiverId)
+
+        val options = DatabasePagingOptions.Builder<Messages>()
+            .setLifecycleOwner(this)
+            .setQuery(query, config, Messages::class.java)
+            .build()
+
+        adapter = MessagePagingAdapter(options)
+        binding.messageRV.layoutManager = LinearLayoutManager(this)
+        binding.messageRV.adapter = adapter
+
+        lifecycleScope.launch {
+            adapter.loadStateFlow.collectLatest { loadStates ->
+                when (loadStates.refresh) {
+                    is LoadState.Error -> {
+                    }
+                    is LoadState.Loading -> {
+                    }
+                    else -> {}
+                }
+
+                when (loadStates.append) {
+                    is LoadState.Error -> {
+                        // The additional load failed. Call the retry() method
+                        // in order to retry the load operation.
+                        // ...
+                    }
+                    is LoadState.Loading -> {
+                        // The adapter has started to load an additional page
+                        // ...
+                    }
+                    is LoadState.NotLoading -> {
+                        if (loadStates.append.endOfPaginationReached) {
+                            // The adapter has finished loading all of the data set
+                            // ...
+                        }
+                        if (loadStates.refresh is LoadState.NotLoading) {
+                            // The previous load (either initial or additional) completed
+                            // ...
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -128,13 +190,21 @@ class ChatActivity : AppCompatActivity() {
                             message?.let { allMessageList.add(it) }
                         }
                         allMessageList.reverse()
-                        Log.d("MessageDBug", "getAllMessageFetch list size:-${allMessageList.size}  thread Name  " + Thread.currentThread().name)
+                        Log.d(
+                            "MessageDBug",
+                            "getAllMessageFetch list size:-${allMessageList.size}  thread Name  " + Thread.currentThread().name
+                        )
 
                         CoroutineScope(Dispatchers.IO).launch {
-                           // Log.d("MessageDBug", "getAllMessageFetch- thread Name " + Thread.currentThread().name)
+                            // Log.d("MessageDBug", "getAllMessageFetch- thread Name " + Thread.currentThread().name)
                             messageDB.messageDao().deleteAllMessages()
-                            if (messageDB.messageDao().getMessageList().isEmpty() && allMessageList.isNotEmpty()) {
-                                Log.d("MessageDBug", "getAllMessageFetch insert list - thread Name " + Thread.currentThread().name)
+                            if (messageDB.messageDao().getMessageList()
+                                    .isEmpty() && allMessageList.isNotEmpty()
+                            ) {
+                                Log.d(
+                                    "MessageDBug",
+                                    "getAllMessageFetch insert list - thread Name " + Thread.currentThread().name
+                                )
                                 messageDB.messageDao().insertAllMessage(allMessageList)
                             }
                         }
@@ -154,6 +224,105 @@ class ChatActivity : AppCompatActivity() {
 
             })
         }
+    }
+
+    private fun getDateWiseChats(date: String) {
+        binding.loader.visibility = View.VISIBLE
+        val query = DBReference.messageRef
+            .child(messageSenderId!!)
+            .child(messageReceiverId)
+            .orderByChild("date")
+            .equalTo(date)
+            .limitToLast(20)
+
+        val chatList = ArrayList<Messages>()
+        query.addChildEventListener(object : ChildEventListener {
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                if (snapshot.exists()) {
+                    binding.loader.visibility = View.GONE
+                    // chatList.clear()
+                    val message = snapshot.getValue(Messages::class.java)
+                    if (message != null) {
+                        messagesList.add(itemPosition++, message)
+                        Log.d("MessageDateBug", "item -- ${message.message}")
+                    }
+                    messageAdapter.notifyDataSetChanged()
+/*                    for (item in snapshot.children) {
+                        val message = item.getValue(Messages::class.java)
+                        message?.let { chatList.add(it) }
+                        if (message != null) {
+                            Log.d("DateWiseItem", "item -- ${message.message}")
+                        }
+                    }
+                    for (i in 0 until chatList.size) {
+                        messagesList.add(0, chatList[i])
+                    }*/
+
+                    // Validator.showToast(this@ChatActivity, "notifyDataSetChanged")
+
+                } else {
+                    Validator.showToast(this@ChatActivity, "No Data Found")
+                    binding.loader.visibility = View.GONE
+                }
+            }
+
+            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onChildRemoved(snapshot: DataSnapshot) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                TODO("Not yet implemented")
+            }
+
+        })
+
+        linearLayoutManager.scrollToPositionWithOffset(10, 0)
+
+
+/*        query.addChildEventListener(object : ValueEventListener {
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    binding.loader.visibility = View.GONE
+                    chatList.clear()
+                    runBlocking {
+                        for (item in snapshot.children) {
+                            val message = item.getValue(Messages::class.java)
+                            message?.let { chatList.add(it) }
+                            if (message != null) {
+                                Log.d("DateWiseItem", "item -- ${message.message}")
+                            }
+                        }
+                        for (i in 0 until chatList.size) {
+                            messagesList.add(0, chatList[i])
+                        }
+
+                        Validator.showToast(this@ChatActivity, "notifyDataSetChanged")
+                        messageAdapter.notifyDataSetChanged()
+                        linearLayoutManager.scrollToPositionWithOffset(messagesList.size - 1, 0)
+                    }
+
+                } else {
+                    Validator.showToast(this@ChatActivity, "No Data Found")
+                    binding.loader.visibility = View.GONE
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                binding.loader.visibility = View.GONE
+                Validator.showToast(this@ChatActivity, "Error: $error")
+            }
+
+        })*/
     }
 
     private fun getMessageFromRoomDB() {
@@ -235,22 +404,27 @@ class ChatActivity : AppCompatActivity() {
             .child(messageSenderId!!)
             .child(messageReceiverId)
             .orderByChild("date")
-            .equalTo("11/03/2023")
-            .limitToLast(10)
+            .equalTo(Validator.getCurrentDate())
+
+        Log.d("MessageDateBug", "item -- ${Validator.getCurrentDate()}")
 
         query.addChildEventListener(object : ChildEventListener {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 binding.loader.visibility = View.GONE
+                val totalItem = dataSnapshot.childrenCount
+                Log.d("childrenCount", "onChildAdded $totalItem")
                 val messages = dataSnapshot.getValue(Messages::class.java)
                 messages?.let {
                     messagesList.add(messages)
-                    Log.d("MessageDBug", "onChildAdded- thread Name " + Thread.currentThread().name)
+                    Log.d("onChildAdded", "onChildAdded " + messages.message)
                     Log.d(
                         "FilterData",
                         "item -:  ${messages.message} -: ${messages.date} "
                     )
-                   // messageAdapter.notifyDataSetChanged()
+                    Log.d("MessageDateBug", "item -- ${messages.message}")
+                    messageAdapter.notifyDataSetChanged()
+                    Log.d("addChildEventListener", "notify " + messages.message)
                     binding.messageRV.scrollToPosition(messagesList.size - 1)
                 }
             }
@@ -278,7 +452,6 @@ class ChatActivity : AppCompatActivity() {
                     "item -:  ${chatMsgFromRoom[i].message} -: ${chatMsgFromRoom[i].date} "
                 )
             }
-
         }
         messageAdapter.notifyDataSetChanged()
         linearLayoutManager.scrollToPositionWithOffset(8, 15)
@@ -339,16 +512,21 @@ class ChatActivity : AppCompatActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun clickEvent() {
+        var day = 1
         binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    if (chatMsgFromRoom.size > 0 && messagesList.size != chatMsgFromRoom.size) {
-
-                        loadMoreMessage1()
-                    } else {
-                        Validator.showToast(this@ChatActivity, "No More Data")
-                    }
+/*                        if (chatMsgFromRoom.size > 0 && messagesList.size != chatMsgFromRoom.size) {
+                            Log.d("MessageDateBug", "Date  " + Validator.getDateWiseFilter(day++))
+                            loadMoreMessage1()
+                        } else {
+                            Validator.showToast(this@ChatActivity, "No More Data")
+                        }*/
+                    Log.d("MessageDateBug", "Date  " + Validator.getDateWiseFilter(day))
+                    itemPosition = 0
+                    getDateWiseChats(Validator.getDateWiseFilter(day).toString())
+                    day++
                 }
             }
         })
@@ -372,12 +550,13 @@ class ChatActivity : AppCompatActivity() {
         binding.sendMessageBtn.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 Log.d("MessageDBug", "insert- thread Name " + Thread.currentThread().name)
-                for (i in 1700..5000) {
+                sendTextMessage()
+/*                for (i in 1700..5000) {
                     delay(500)
                     sendTextMessage(i)
-                }
+                }*/
             }
-            // sendTextMessage()
+
         }
         binding.sendFilesBtn.setOnClickListener {
             val options = arrayOf<CharSequence>(
@@ -538,10 +717,10 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
-    private fun sendTextMessage(i: Int) {
+    private fun sendTextMessage() {
         val messages = Messages(
             messageSenderId.toString(),
-            i.toString(),
+            binding.inputMessages.text.toString(),
             "text",
             messageReceiverId,
             "",
@@ -549,8 +728,22 @@ class ChatActivity : AppCompatActivity() {
             Validator.getCurrentDate(),
         )
         chatViewModel.sendMessage(messageDB, messages, messageReceiverId)
-      //  binding.inputMessages.setText("")
+        //  binding.inputMessages.setText("")
     }
+
+/*    private fun sendTextMessage() {
+        val messages = Messages(
+            messageSenderId.toString(),
+            binding.inputMessages.text.toString(),
+            "text",
+            messageReceiverId,
+            "",
+            Validator.getCurrentTime(),
+            Validator.getCurrentDate(),
+        )
+        chatViewModel.sendMessage(messageDB, messages, messageReceiverId)
+        binding.inputMessages.setText("")
+    }*/
 
     override fun onStart() {
         super.onStart()

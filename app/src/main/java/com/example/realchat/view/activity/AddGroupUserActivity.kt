@@ -36,21 +36,19 @@ class AddGroupUserActivity : AppCompatActivity() {
 
         adapter.setCallBackListener(object : GroupMemberAddCallBack {
             override fun onSelectUserList(list: ArrayList<User>) {
+                selectedUserList.clear()
                 if (list.size > 0) {
-                    Toast.makeText(
-                        this@AddGroupUserActivity,
-                        "Submitted Button",
-                        Toast.LENGTH_SHORT
-                    ).show()
                     selectedUserList = list
                 }
             }
         })
 
-        binding.requestShowBtn.setOnClickListener {
+        binding.addUserBtn.setOnClickListener {
             Log.d("users", "userList -$selectedUserList")
             selectedUserList.forEach { user ->
-                DBReference.groupRef.child("Users").child(user.uid)
+                DBReference.groupRef
+                    .child(groupName)
+                    .child("Users").child(user.uid)
                     .setValue("")
                     .addOnCompleteListener {
                         if (it.isSuccessful) {
@@ -91,9 +89,11 @@ class AddGroupUserActivity : AppCompatActivity() {
         userRef = FirebaseDatabase.getInstance().reference
         userRef = FirebaseDatabase.getInstance().reference.child("Users")
 
+        selectedUserList = ArrayList()
+
         groupName = intent.getStringExtra("groupName").toString().trim()
 
-        Validator.showToast(this,groupName)
+        Validator.showToast(this, groupName)
 
     }
 

@@ -1,14 +1,9 @@
 package com.example.realchat.utils
 
 import android.annotation.SuppressLint
-import android.app.DatePickerDialog
 import android.content.Context
-import android.text.Html
-import android.text.TextUtils
 import android.util.Log
 import android.widget.*
-import androidx.core.content.ContextCompat
-import com.example.realchat.R
 import com.google.android.material.textfield.TextInputEditText
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -60,6 +55,16 @@ class Validator {
         fun getCurrentTime(): String {
             val currentTime = SimpleDateFormat("hh:mm:ss a")
             return currentTime.format(calendar.time)
+        }
+
+        @SuppressLint("ResourceAsColor")
+        fun getDateWiseFilter(totalDay: Int): String? {
+            @SuppressLint("SimpleDateFormat") val format = SimpleDateFormat("dd/MM/yyyy")
+            val calendar = Calendar.getInstance()
+            calendar.time = Date()
+            calendar.add(Calendar.DAY_OF_MONTH, -totalDay)
+            val d = calendar.time
+            return format.format(d)
         }
 
 

@@ -56,6 +56,8 @@
 
     </RelativeLayout>
 
+
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/private_message_list_of_users"
         android:layout_width="match_parent"
@@ -65,6 +67,17 @@
         android:layout_marginBottom="6dp"
         app:layout_constraintBottom_toTopOf="@id/chat_linear_layout"
         app:layout_constraintTop_toBottomOf="@+id/toolbarLayout" />
+
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/toolbarLayout"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbarLayout" />
+
 
     <RelativeLayout
         android:id="@+id/chat_linear_layout"
