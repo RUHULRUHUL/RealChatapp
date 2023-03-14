@@ -1,9 +1,14 @@
 package com.example.realchat.utils
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
 import android.widget.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputEditText
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -66,6 +71,18 @@ class Validator {
             val d = calendar.time
             return format.format(d)
         }
+
+        fun notificationPermissionCheck(context: Context): Boolean {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                return false
+            }
+
+    }
 
 
         fun getValeFromEdiText(editText: TextInputEditText): String {

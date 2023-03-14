@@ -1,24 +1,36 @@
 package com.example.realchat.view.activity
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.PermissionChecker
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.android.volley.toolbox.JsonObjectRequest
 import com.example.realchat.databinding.ActivityGroupCreateBinding
 import com.example.realchat.model.message.GroupMessage
 import com.example.realchat.utils.DBReference
+import com.example.realchat.utils.Utils
 import com.example.realchat.utils.Validator
 import com.example.realchat.view.adapter.GroupMessageAdapter
 import com.example.realchat.viewModel.GroupViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.firestore.util.Listener
+import com.google.firebase.messaging.FirebaseMessaging
+import org.json.JSONException
+import org.json.JSONObject
+import retrofit2.Response
 import java.util.*
 
 
@@ -39,6 +51,12 @@ class GroupChatActivity : AppCompatActivity() {
     private var isLoading: Boolean = false
     private var isFirstTimeLoad = false
     private var loadMorePageStatus = false
+
+
+    private val FCM_API = "https://fcm.googleapis.com/fcm/send"
+    private val serverKey = "key=" + "217306933773"
+    private val contentType = "application/json"
+    val topic = "/topics/GroupChat"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,7 +108,7 @@ class GroupChatActivity : AppCompatActivity() {
                     val message = dataSnapshot.getValue(GroupMessage::class.java)
                     message?.let {
                         if (!loadMorePageStatus) {
-                            Validator.showToast(this@GroupChatActivity,"last KEy")
+                            Validator.showToast(this@GroupChatActivity, "last KEy")
                             itemPosition++
                             if (itemPosition == 1) {
                                 lastKey = dataSnapshot.key.toString()
@@ -100,7 +118,7 @@ class GroupChatActivity : AppCompatActivity() {
                             adapter.notifyDataSetChanged()
                             binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
                         } else {
-                            Validator.showToast(this@GroupChatActivity,"prev last KEy")
+                            Validator.showToast(this@GroupChatActivity, "prev last KEy")
                             messagesList.add(message)
                             adapter.notifyDataSetChanged()
                             binding.privateMessageListOfUsers.scrollToPosition(messagesList.size - 1)
@@ -199,6 +217,23 @@ class GroupChatActivity : AppCompatActivity() {
 
         binding.sendMessageBtn.setOnClickListener {
             mAuth.currentUser?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (Validator.notificationPermissionCheck(this)) {
+                        Toast.makeText(this, "Permission Success", Toast.LENGTH_SHORT).show()
+                        sendNotification()
+                    } else {
+                        notificationRequestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                } else {
+                    Toast.makeText(
+                        this,
+                        "No Need Permission under 13 android version",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    sendNotification()
+                }
+
+
                 sendGroupTxtMessage()
             }
         }
@@ -210,6 +245,54 @@ class GroupChatActivity : AppCompatActivity() {
         }
     }
 
+    private fun sendNotification() {
+        val notification = JSONObject()
+        val notifcationBody = JSONObject()
+
+        try {
+            notifcationBody.put("title", "Enter_title")
+            notifcationBody.put("message", binding.inputMessages.text)   //Enter your notification message
+            notification.put("to", topic)
+            notification.put("data", notifcationBody)
+            Log.e("TAG", "try")
+        } catch (e: JSONException) {
+            Log.e("TAG", "onCreate: " + e.message)
+        }
+
+    }
+
+    private val notificationRequestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(this, "success notification permission", Toast.LENGTH_SHORT).show()
+                sendNotification()
+            }
+        }
+
+/*    private fun sendNotification(notification: JSONObject) {
+        Log.e("TAG", "sendNotification")
+        val jsonObjectRequest = object : JsonObjectRequest(FCM_API, notification,
+            Response.Listener<JSONObject> { response ->
+                Log.i("TAG", "onResponse: $response")
+                msg.setText("")
+            },
+            Response.ErrorListener {
+                Toast.makeText(this@MainActivity, "Request error", Toast.LENGTH_LONG).show()
+                Log.i("TAG", "onErrorResponse: Didn't work")
+            }) {
+
+            override fun getHeaders(): Map<String, String> {
+                val params = HashMap<String, String>()
+                params["Authorization"] = serverKey
+                params["Content-Type"] = contentType
+                return params
+            }
+        }
+        requestQueue.add(jsonObjectRequest)
+    }*/
+
     private fun initValue() {
         mAuth = FirebaseAuth.getInstance()
         binding.customProfileName.text = intent.getStringExtra("groupName")
@@ -220,6 +303,8 @@ class GroupChatActivity : AppCompatActivity() {
         linearLayoutManager = LinearLayoutManager(this)
         binding.privateMessageListOfUsers.layoutManager = linearLayoutManager
         binding.privateMessageListOfUsers.adapter = adapter
+
+        FirebaseMessaging.getInstance().subscribeToTopic("/topics/GroupChat")
     }
 
     private fun getUserInfo() {
