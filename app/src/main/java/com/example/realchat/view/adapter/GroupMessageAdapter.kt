@@ -6,16 +6,21 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.R
+import com.example.realchat.helper.callBack.MessageDeleteCallBack
 import com.example.realchat.model.message.GroupMessage
+import com.example.realchat.utils.DBReference
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.mikhaellopez.circularimageview.CircularImageView
 
 class GroupMessageAdapter(
     private var messageList: ArrayList<GroupMessage>
 ) : RecyclerView.Adapter<GroupMessageAdapter.ViewHolder>() {
     private var mAuth: FirebaseAuth? = null
+    private lateinit var deleteCallBack:MessageDeleteCallBack
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.custom_messages_layout, parent, false)
@@ -65,6 +70,10 @@ class GroupMessageAdapter(
                 holder.receiverprofileimage.visibility = View.VISIBLE
             }
         }
+
+        holder.itemView.setOnClickListener {
+            deleteMessage(position, holder)
+        }
     }
 
     fun addChatList(list: List<GroupMessage>) {
@@ -72,6 +81,32 @@ class GroupMessageAdapter(
             messageList.add(i, list[i])
         }
         notifyDataSetChanged()
+    }
+
+    fun deleteMessage(callBack: MessageDeleteCallBack){
+        this.deleteCallBack = callBack
+    }
+
+    private fun deleteMessage(position: Int, holder: ViewHolder) {
+        DBReference.uid?.let {
+            DBReference.groupRef
+                .child("whatsup")
+                .child(messageList[position].messageId)
+                .removeValue()
+                .addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        deleteCallBack.onMessageDelete(true)
+                        messageList.removeAt(position)
+                        notifyItemRemoved(position)
+                    } else {
+                        Toast.makeText(
+                            holder.itemView.context,
+                            "Error...",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+        }
     }
 
     override fun getItemCount(): Int {

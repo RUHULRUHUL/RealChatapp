@@ -7,6 +7,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -22,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.realchat.databinding.ActivityChatBinding
 import com.example.realchat.helper.room.MessageDB
+import com.example.realchat.model.message.GroupMessage
 import com.example.realchat.model.message.Messages
 import com.example.realchat.model.profile.ActiveStatus
 import com.example.realchat.model.profile.KeyBordType
@@ -68,6 +70,9 @@ class ChatActivity : AppCompatActivity() {
     private var itemPosition = 0
     private var topMessageKey = ""
 
+    private var loadMorePageStatus = false
+    private var isLoading: Boolean = false
+
     @SuppressLint("SimpleDateFormat")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,8 +84,8 @@ class ChatActivity : AppCompatActivity() {
         //paginationData()
         // getAllMessageFetch()
         //getMessageFromRoomDB()
-        //loadMessage()
-        loadMessage1()
+        loadMessage()
+        //loadMessage1()
         getKeyBordTypeStatus()
         getOnlineStatus()
         displayLastSeen()
@@ -345,17 +350,33 @@ class ChatActivity : AppCompatActivity() {
             @SuppressLint("NotifyDataSetChanged")
             override fun onChildAdded(dataSnapshot: DataSnapshot, s: String?) {
                 binding.loader.visibility = View.GONE
-                val messages = dataSnapshot.getValue(Messages::class.java)
-                messages?.let {
-                    itemPosition++
-                    if (itemPosition == 1) {
+                val message = dataSnapshot.getValue(Messages::class.java)
+                message?.let {
+                    //itemPosition++
+/*                    if (itemPosition == 1) {
                         val messageKey = dataSnapshot.key
                         lastKey = messageKey.toString()
                         prevKey = messageKey.toString()
                     }
-                    messagesList.add(messages)
+                    messagesList.add(message)
                     messageAdapter.notifyDataSetChanged()
-                    binding.messageRV.scrollToPosition(messagesList.size - 1)
+                    binding.messageRV.scrollToPosition(messagesList.size - 1)*/
+                    if (!loadMorePageStatus) {
+                        Validator.showToast(this@ChatActivity, "last KEy")
+                        itemPosition++
+                        if (itemPosition == 1) {
+                            lastKey = dataSnapshot.key.toString()
+                            prevKey = dataSnapshot.key.toString()
+                        }
+                        messagesList.add(message)
+                        adapter.notifyDataSetChanged()
+                        binding.messageRV.scrollToPosition(messagesList.size - 1)
+                    } else {
+                        Validator.showToast(this@ChatActivity, "prev last KEy")
+                        messagesList.add(message)
+                        adapter.notifyDataSetChanged()
+                        binding.messageRV.scrollToPosition(messagesList.size - 1)
+                    }
                 }
             }
 
@@ -513,25 +534,25 @@ class ChatActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     private fun clickEvent() {
         var day = 1
-        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+/*        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
-/*                        if (chatMsgFromRoom.size > 0 && messagesList.size != chatMsgFromRoom.size) {
+*//*                        if (chatMsgFromRoom.size > 0 && messagesList.size != chatMsgFromRoom.size) {
                             Log.d("MessageDateBug", "Date  " + Validator.getDateWiseFilter(day++))
                             loadMoreMessage1()
                         } else {
                             Validator.showToast(this@ChatActivity, "No More Data")
-                        }*/
+                        }*//*
                     Log.d("MessageDateBug", "Date  " + Validator.getDateWiseFilter(day))
                     itemPosition = 0
                     getDateWiseChats(Validator.getDateWiseFilter(day).toString())
                     day++
                 }
             }
-        })
+        })*/
 
-/*        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.messageRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
@@ -539,22 +560,41 @@ class ChatActivity : AppCompatActivity() {
                         Validator.showToast(this@ChatActivity, "No More Data")
                     } else {
                         binding.loader.visibility = View.VISIBLE
-                        currentpage++
                         itemPosition = 0
                         loadMoreMessage()
                     }
+
+                    if (!isLoading) {
+                        if (lastKey == topMessageKey) {
+                            Log.d(
+                                "topLastMessageKey",
+                                "rich to top no more data lastKEy $lastKey topKey: $topMessageKey are the same"
+                            )
+                            Validator.showToast(this@ChatActivity, "No More Data")
+                        } else {
+                            binding.loader.visibility = View.VISIBLE
+                            isLoading = true
+                            object : CountDownTimer(2000, 1000) {
+                                override fun onTick(millisUntilFinished: Long) {
+                                }
+
+                                override fun onFinish() {
+                                    loadMoreMessage()
+                                }
+                            }.start()
+                        }
+                    } else {
+                        Validator.showToast(this@ChatActivity, "Please wait for loading...")
+                    }
+
                 }
             }
-        })*/
+        })
 
         binding.sendMessageBtn.setOnClickListener {
             CoroutineScope(Dispatchers.IO).launch {
                 Log.d("MessageDBug", "insert- thread Name " + Thread.currentThread().name)
                 sendTextMessage()
-/*                for (i in 1700..5000) {
-                    delay(500)
-                    sendTextMessage(i)
-                }*/
             }
 
         }
