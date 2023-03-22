@@ -7,6 +7,12 @@
         android:title="chat" />
 
     <item
+        android:id="@+id/chatHistoryFragment"
+        android:icon="@drawable/ic_chat"
+        android:title="history" />
+
+
+    <item
         android:id="@+id/findFriendFragment"
         android:icon="@drawable/baseline_person_pin_circle_24"
         android:title="users" />

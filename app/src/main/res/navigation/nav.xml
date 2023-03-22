@@ -7,27 +7,32 @@
 
     <fragment
         android:id="@+id/chatsFragment"
-        android:name="com.example.realchat.view.fragment.ChatsFragment"
+        android:name="com.example.realchatapp.view.fragment.ChatsFragment"
         android:label="fragment_chats"
         tools:layout="@layout/fragment_chats" />
     <fragment
         android:id="@+id/groupsFragment"
-        android:name="com.example.realchat.view.fragment.GroupsFragment"
+        android:name="com.example.realchatapp.view.fragment.GroupsFragment"
         android:label="fragment_groups"
         tools:layout="@layout/fragment_groups" />
 <!--    <fragment
         android:id="@+id/searchContactFragment"
-        android:name="com.example.realchat.view.fragment.SearchContactFragment"
+        android:name="realchatappapp.view.fragment.SearchContactFragment"
         android:label="fragment_search_contact"
         tools:layout="@layout/fragment_search_contact" />-->
     <fragment
         android:id="@+id/userProfileFragment"
-        android:name="com.example.realchat.view.fragment.UserProfileFragment"
+        android:name="com.example.realchatapp.view.fragment.UserProfileFragment"
         android:label="fragment_user_profile"
         tools:layout="@layout/fragment_user_profile" />
     <fragment
         android:id="@+id/findFriendFragment"
-        android:name="com.example.realchat.view.fragment.FindFriendFragment"
+        android:name="com.example.realchatapp.view.fragment.FindFriendFragment"
         android:label="fragment_find_friend"
         tools:layout="@layout/fragment_find_friend" />
+    <fragment
+        android:id="@+id/chatHistoryFragment"
+        android:name="com.example.realchatapp.view.fragment.ChatHistoryFragment"
+        android:label="fragment_chat_history"
+        tools:layout="@layout/fragment_chat_history" />
 </navigation>

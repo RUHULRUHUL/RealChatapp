@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.realchat'
+    namespace 'com.example.realchatapp'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.realchat"
+        applicationId "com.example.realchatapp"
         minSdk 24
         targetSdk 33
         versionCode 1

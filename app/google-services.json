@@ -1,42 +1,42 @@
 {
   "project_info": {
-    "project_number": "217306933773",
-    "firebase_url": "https://leetschat-default-rtdb.firebaseio.com",
-    "project_id": "leetschat",
-    "storage_bucket": "leetschat.appspot.com"
+    "project_number": "530864605762",
+    "firebase_url": "https://extreme-karma-309705-default-rtdb.firebaseio.com",
+    "project_id": "extreme-karma-309705",
+    "storage_bucket": "extreme-karma-309705.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:217306933773:android:7049d496426b66574fc344",
+        "mobilesdk_app_id": "1:530864605762:android:b2414ba1c04c0e41727bdb",
         "android_client_info": {
-          "package_name": "com.example.realchat"
+          "package_name": "com.example.realchatapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "217306933773-eajbq7q7di41u6odtihnosfgidqo32ga.apps.googleusercontent.com",
+          "client_id": "530864605762-k3mrpg2k1bdnd8932f1n4giigba4dvth.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.realchat",
+            "package_name": "com.example.realchatapp",
             "certificate_hash": "d2f9bb7259abbb096360d34a2aed07b1c3a68121"
           }
         },
         {
-          "client_id": "217306933773-tfgdbh8ea2f7no0egoepsp598gu68psc.apps.googleusercontent.com",
+          "client_id": "530864605762-ml5t95jq2aunom4u78kkhkit6v26mfim.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDqFmiJDqPRv51meGOhbLxdIJMi54iWMaU"
+          "current_key": "AIzaSyAT4rHCdtL7HcQMASAjY3SThRAuv2vRNHA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "217306933773-tfgdbh8ea2f7no0egoepsp598gu68psc.apps.googleusercontent.com",
+              "client_id": "530864605762-ml5t95jq2aunom4u78kkhkit6v26mfim.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
